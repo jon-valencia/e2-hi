@@ -370,7 +370,107 @@ function createLayersContinuousLinetype(){
  
   return;
 }
+
+function createLBPMLeaders(){
+  let ss = SpreadsheetApp.getActiveSheet();
+  let selection = ss.getSelection();
+  
+  let fileText = ''; // init
  
+  fileText += '(command "HPLINETYPE" "ON")\n'; // constants
+  fileText += '(command "OSNAP" "")\n';
+  fileText += '(command "COLOR" "BYLAYER")\n';
+  fileText += '(command "CMLEADERSTYLE" "E2 LEAD - NEG")\n'; // CHECK - write only once since recoloring later?
+  
+  // Designates starting coordinates for mleaders. The first mleader will have a point at -15,15 in paperspace
+  // All mleaders have 0.5 vertical separation and 2.5 horizontal separation from point to point
+  // x1 & x2 and y1 & y2 are differentiated in order to preserve the x1 and y1 letiables
+  let x1 = -15
+  let x2 = x1 + 0.5
+  let y1 = 15.5
+  let y2 = y1 + 1
+ 
+  let sids = selection.getActiveRange().getValues();
+  let curSID = selection.getActiveRange().getValue();
+  let curArea = curSID.substring(0, curSID.length - 3).replace("/","_");
+  
+  fileText += '(command "CLAYER" "' + curArea + '")\n';
+  
+  for (let i of sids) {
+    let sid = i[0].replace("/","_");
+    console.log(sid)
+    let area = sid.substring(0, sid.length - 3);
+    curArea = curArea.replace("/","_")
+    console.log(curArea)
+    if (area === curArea) {
+      y1 -= 0.5;
+      y2 = y1 + 1;
+    } else {
+      curArea = area;
+      fileText += `(command "CLAYER" "${area}")\n`
+      x1 += 2.5;
+      x2 = x1 + 0.5;
+      y1 = 15;
+      y2 = y1 + 1;
+    }
+
+    fileText += `(command "MLEADER" "${x1}, ${y1}" "${x2}, ${y2}" "${sid}")\n`;
+  }
+
+  console.log(fileText)
+ 
+  let split = curSID.split("-");
+  let facNum = split[split.length - 3].replace("/","_");
+  fileName = '' + facNum + '_LBPMLeaderGenerator.scr';
+  
+  console.log(fileName)
+  href = DriveApp.createFile(fileName, fileText).getDownloadUrl();
+  let htmlOutput = HtmlService
+    .createHtmlOutput('<a target="_blank" href="' + href + '" >Click to download</a>')
+    .setWidth(250) //optional
+    .setHeight(50); //optional
+  SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'Download below');
+}
+
+function createLBPLayers(){
+  let ss = SpreadsheetApp.getActiveSheet();
+  let selection = ss.getSelection();
+ 
+  let fileText = ''; // init
+ 
+  fileText += '(setlet "expert" 3)\n'; // this line is only essential for HA linetypes
+  fileText += '(ltscale 1)\n';
+
+  let sids = selection.getActiveRange().getValues();
+  let curSID = selection.getActiveRange().getValue().replace("/","_");
+  let curArea = curSID.substring(0, curSID.length - 3).replace("/","_");
+  let color = 96;
+  
+  fileText += `-layer m ${curArea} c ${color} ${curArea} l Continuous ${curArea} \n`
+  console.log(fileText)
+
+  for (let i of sids) {
+    let sid = i[0];
+    let area = sid.substring(0, sid.length - 3).replace("/","_");
+    if (area !== curArea) {
+      curArea = area;
+      fileText += `-layer m ${curArea} c ${color} ${curArea} l Continuous ${curArea} \n`
+    }
+  }
+  console.log(fileText)
+ 
+  let split = curSID.split('-');
+  let facNum = split[split.length - 3].replace("/","_");
+  fileName = '' + facNum + '_LBPLayerGenerator.scr';
+  
+  href = DriveApp.createFile(fileName, fileText).getDownloadUrl();
+  let htmlOutput = HtmlService
+    .createHtmlOutput('<a target="_blank" href="' + href + '" >Click to download</a>')
+    .setWidth(250) //optional
+    .setHeight(50); //optional
+  SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'Download below');
+ 
+} 
  
 function createRecolor(){ // Last priority
   throw new Error("NIY");
