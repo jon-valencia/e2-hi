@@ -31,4 +31,8 @@ function onOpen() {
       .addSubMenu(SpreadsheetApp.getUi().createMenu('Survey Report Script')
         .addItem('Create Report Data Sheet', 'createSurveyRep'))
       .addToUi();
+  SpreadsheetApp.getUi()
+      .createMenu('Data Entry Helper')
+        .addItem('3x','superSizeMe')
+      .addToUi();
 }
