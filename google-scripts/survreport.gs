@@ -102,7 +102,8 @@ function createAutocratSheet(url, trackName) {
   let assuA = cover.getRange(38, 2).getValue();
   for (let i = 0; i < bNos.length; i++) {
     if (bNo == bNos[i][0]) {
-      var sqft = track.getRange(i+2, sqftCol).getValue();
+      if (sqftCol === 'NEED AREA') var sqft = sqftCol;
+      else var sqft = track.getRange(i+2, sqftCol).getValue();  
       var filename = track.getRange(i+2, filenameCol).getValue();
     }
   }
