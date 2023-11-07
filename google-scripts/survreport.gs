@@ -1,4 +1,4 @@
-/* --- LAST UPDATED: 08/14/2023 --- */
+/* --- LAST UPDATED: 11/06/2023 --- */
 
 function createSurveyRep() {
   let ui = SpreadsheetApp.getUi();
@@ -78,6 +78,7 @@ function createAutocratSheet(url, trackName) {
   // Error checking if can't find building number column and area column
   if (bNos === undefined) throw new Error('Could not find "Building Number" column');
   if (sqftCol === undefined) sqftCol = 'NEED AREA';
+  console.log(sqftCol)
 
   let insp = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1On-MPNHR9MSO0CnJXlEoek17StcftIDHbI9YoGbIvnQ/edit?usp=sharing").getSheets()[0];
   let inspLRow = insp.getLastRow();
@@ -94,7 +95,7 @@ function createAutocratSheet(url, trackName) {
   let fTeamFull = cover.getRange(6, 2).getValue().split(", ");
   let bName = cover.getRange(7, 2).getValue();
   let loc = cover.getRange(8, 2).getValue();
-  let survDate = cover.getRange(9, 2).getValue();
+  let survDate = formatDate(cover.getRange(9, 2).getValue())
   let deviations = cover.getRange(10, 2, 5).getValues();
   let totHA = cover.getRange(21, 4).getValue();
   let totSID = cover.getRange(26, 4).getValue();
@@ -118,7 +119,7 @@ function createAutocratSheet(url, trackName) {
   }
   let devs = "";
   for (let i = 0; i < deviations.length; i++) {
-    if (deviations[i][0] !== '' && deviations[i][0] !== 'None') {
+    if (deviations[i][0] !== '' && deviations[i][0] !== 'None' && deviations[i][0] !== 'N/A') {
       devs += `${deviations[i][0]}\n\n`;
     }
   }
@@ -158,5 +159,18 @@ function createAutocratSheet(url, trackName) {
   let aLC = auto.getLastColumn()
   for (let i = 0; i < aLC; i++) {
     if (auto.getRange(2, i+1).getValue() == 'Element Environmental, LLC') auto.getRange(2, i+1).setValue('Inspector, E2')
+  }
+}
+
+function formatDate(date) {
+  let start = date.split(" ")[0];
+  let end = date.split(" ")[2];
+  console.log(end)
+  if(end === undefined) {
+    return new Date(`"${start.split("/")[0]},${start.split("/")[1]},${start.split("/")[2]}"`).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'});
+  } else {
+    const date_start = new Date(`"${start.split("/")[0]},${start.split("/")[1]},${start.split("/")[2]}"`).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'});
+    const date_end = new Date(`"${end.split("/")[0]},${end.split("/")[1]},${end.split("/")[2]}"`).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'});
+    return date_start + " - " + date_end;
   }
 }
