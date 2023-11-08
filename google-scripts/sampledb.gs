@@ -1,3 +1,4 @@
+/* --- LAST UPDATED: 11/7/2023 --- */
 let ss;
 
 // setting global constants for row and col numbers so it 
@@ -195,19 +196,19 @@ function createDBC() {
 
 function formatLabData() {
   // get the values for all the fibrous material percentages
-  let cell = dataSet.getRange(2, 11, dsLastRow - 1).getValues();
-  let fibGla = dataSet.getRange(2, 12, dsLastRow - 1).getValues();
-  let synth = dataSet.getRange(2, 13, dsLastRow - 1).getValues();
-  let talc = dataSet.getRange(2, 14, dsLastRow - 1).getValues();
-  let wolla = dataSet.getRange(2, 15, dsLastRow - 1).getValues();
+  let cell = dataSet.getRange(2, 14, dsLastRow - 1).getValues();
+  let fibGla = dataSet.getRange(2, 15, dsLastRow - 1).getValues();
+  let synth = dataSet.getRange(2, 16, dsLastRow - 1).getValues();
+  let talc = dataSet.getRange(2, 17, dsLastRow - 1).getValues();
+  let wolla = dataSet.getRange(2, 18, dsLastRow - 1).getValues();
 
   // get the values for all layer numbers
-  let layerNum = dataSet.getRange(2, 17, dsLastRow - 1).getValues();
+  let layerNum = dataSet.getRange(2, 20, dsLastRow - 1).getValues();
 
   // get the values for all the percentage of asbestos
-  let asb1Quant = dataSet.getRange(2, 21, dsLastRow - 1).getValues();
-  let asb2Quant = dataSet.getRange(2, 23, dsLastRow - 1).getValues();
-  let asb3Quant = dataSet.getRange(2, 25, dsLastRow - 1).getValues();
+  let asb1Quant = dataSet.getRange(2, 24, dsLastRow - 1).getValues();
+  let asb2Quant = dataSet.getRange(2, 26, dsLastRow - 1).getValues();
+  let asb3Quant = dataSet.getRange(2, 28, dsLastRow - 1).getValues();
   
   // convert all NDs to 0s, all Trace to 0.99(as a place holder), and all other values to numbers instead of strings
   for (let i = 0; i < cell.length; i++) {
@@ -270,21 +271,21 @@ function formatLabData() {
     else asb3Quant[i][0] = Number(asb3Quant[i][0]);
   }
   // insert newly formatted data back to the lab data set
-  dataSet.getRange(2, 11, dsLastRow - 1).setValues(cell);
-  dataSet.getRange(2, 12, dsLastRow - 1).setValues(fibGla);
-  dataSet.getRange(2, 13, dsLastRow - 1).setValues(synth);
-  dataSet.getRange(2, 14, dsLastRow - 1).setValues(talc);
-  dataSet.getRange(2, 15, dsLastRow - 1).setValues(wolla);
+  dataSet.getRange(2, 14, dsLastRow - 1).setValues(cell);
+  dataSet.getRange(2, 15, dsLastRow - 1).setValues(fibGla);
+  dataSet.getRange(2, 16, dsLastRow - 1).setValues(synth);
+  dataSet.getRange(2, 17, dsLastRow - 1).setValues(talc);
+  dataSet.getRange(2, 18, dsLastRow - 1).setValues(wolla);
 
-  dataSet.getRange(2, 21, dsLastRow - 1).setValues(asb1Quant);
-  dataSet.getRange(2, 23, dsLastRow - 1).setValues(asb2Quant);
-  dataSet.getRange(2, 25, dsLastRow - 1).setValues(asb3Quant);
+  dataSet.getRange(2, 24, dsLastRow - 1).setValues(asb1Quant);
+  dataSet.getRange(2, 26, dsLastRow - 1).setValues(asb2Quant);
+  dataSet.getRange(2, 28, dsLastRow - 1).setValues(asb3Quant);
 }
 
 // function to create the barebones, non-formatted app a
 function createLabExport() {
   // get sample ids from the lab data
-  let sampID = dataSet.getRange(2, 5, dsLastRow - 1).getValues();
+  let sampID = dataSet.getRange(2, 8, dsLastRow - 1).getValues();
   let homArea = [];
   // remove last letter from SampleID and store in homogeneous area array
   for (let i = 0; i < sampID.length; i++) {
@@ -327,9 +328,9 @@ function createLabExport() {
 
   // get data needed for the "Layer (% of Combined Sample)" column
   // merge it all together into one array
-  let layerNum = dataSet.getRange(2, 17, dsLastRow - 1).getValues();
-  let layer = dataSet.getRange(2, 18, dsLastRow - 1).getValues();
-  let pOfTotal = dataSet.getRange(2, 19, dsLastRow - 1).getValues();
+  let layerNum = dataSet.getRange(2, 20, dsLastRow - 1).getValues();
+  let layer = dataSet.getRange(2, 21, dsLastRow - 1).getValues();
+  let pOfTotal = dataSet.getRange(2, 22, dsLastRow - 1).getValues();
   let layerP = [];
   for (let i = 0; i < layer.length; i++) {
     layerP[i] = [`${layerNum[i]}     ${layer[i]} (${pOfTotal[i]}%)`];
@@ -353,12 +354,12 @@ function createLabExport() {
 // function that reformats asbestos lab data
 function handleAsbestos() {
   // get the values and names of all asbestos samples
-  let asb1Name = dataSet.getRange(2, 20, dsLastRow - 1).getValues();
-  let asb1Quant = dataSet.getRange(2, 21, dsLastRow - 1).getValues();
-  let asb2Name = dataSet.getRange(2, 22, dsLastRow - 1).getValues();
-  let asb2Quant = dataSet.getRange(2, 23, dsLastRow - 1).getValues();
-  let asb3Name = dataSet.getRange(2, 24, dsLastRow - 1).getValues();
-  let asb3Quant = dataSet.getRange(2, 25, dsLastRow - 1).getValues();
+  let asb1Name = dataSet.getRange(2, 23, dsLastRow - 1).getValues();
+  let asb1Quant = dataSet.getRange(2, 24, dsLastRow - 1).getValues();
+  let asb2Name = dataSet.getRange(2, 25, dsLastRow - 1).getValues();
+  let asb2Quant = dataSet.getRange(2, 26, dsLastRow - 1).getValues();
+  let asb3Name = dataSet.getRange(2, 27, dsLastRow - 1).getValues();
+  let asb3Quant = dataSet.getRange(2, 28, dsLastRow - 1).getValues();
   
   // initialize empty arrays for each sample's total asbestos content
   // and asbestos quantities
@@ -608,7 +609,7 @@ function updateCoversheet() {
         let lay = l[i][0].substring(1).trim().split('(');
         pos.push([vals[i][0], lay[0].trim(), has[i][0], f[i][0], c[i][0], lo[i][0]])
         posHA.push(`${has[i][0]} ${vals[i][0]} ${lo[i][0]} ${lay[0].trim()}`)
-      } else if (asbPerc[i][0] === '>1% Assumed' || asbPerc[i][0] === '>0.1% Assumed') assuA += `${mt[i][0]} (HA ${has[i][0]}, ${f[i][0]}, ${c[i][0]} condition) observed throughout the building.\n\n`;
+      } else if (asbPerc[i][0] === '>1% Assumed' || asbPerc[i][0] === '>0.1% Assumed') assuA += `${mt[i][0]} (HA ${has[i][0]}, ${f[i][0]}, ${c[i][0]} condition) observed in the ${lo[i][0]}/n/n`;
     }
   }
   let uniqPos = [];
@@ -656,26 +657,26 @@ function exportAppA() {
 
 function addDBVals() {
   // get layer numbers, dates, and report numbers from the lab data
-  let layerNum = dataSet.getRange(2, 17, dsLastRow - 1).getValues();
-  let dA = dataSet.getRange(2, 6, dsLastRow - 1).getValues();
+  let layerNum = dataSet.getRange(2, 20, dsLastRow - 1).getValues();
+  let dA = dataSet.getRange(2, 9, dsLastRow - 1).getValues();
   let rN = dataSet.getRange(2, 1, dsLastRow - 1).getValues();
   
   // get sample ids and asbestos data from the lab data
-  let whereA = dataSet.getRange(2, 3, dsLastRow - 1).getValues();
-  let sampID = dataSet.getRange(2, 5, dsLastRow - 1).getValues();
-  let asb1Name = dataSet.getRange(2, 20, dsLastRow - 1).getValues();
-  let asb1Quant = dataSet.getRange(2, 21, dsLastRow - 1).getValues();
-  let asb2Name = dataSet.getRange(2, 22, dsLastRow - 1).getValues();
-  let asb2Quant = dataSet.getRange(2, 23, dsLastRow - 1).getValues();
-  let asb3Name = dataSet.getRange(2, 24, dsLastRow - 1).getValues();
-  let asb3Quant = dataSet.getRange(2, 25, dsLastRow - 1).getValues();
+  let whereA = dataSet.getRange(2, 4, dsLastRow - 1).getValues();
+  let sampID = dataSet.getRange(2, 8, dsLastRow - 1).getValues();
+  let asb1Name = dataSet.getRange(2, 23, dsLastRow - 1).getValues();
+  let asb1Quant = dataSet.getRange(2, 24, dsLastRow - 1).getValues();
+  let asb2Name = dataSet.getRange(2, 25, dsLastRow - 1).getValues();
+  let asb2Quant = dataSet.getRange(2, 26, dsLastRow - 1).getValues();
+  let asb3Name = dataSet.getRange(2, 27, dsLastRow - 1).getValues();
+  let asb3Quant = dataSet.getRange(2, 28, dsLastRow - 1).getValues();
 
   // get other fibrous data from the lab data
-  let cell = dataSet.getRange(2, 11, dsLastRow - 1).getValues();
-  let fibGla = dataSet.getRange(2, 12, dsLastRow - 1).getValues();
-  let synth = dataSet.getRange(2, 13, dsLastRow - 1).getValues();
-  let talc = dataSet.getRange(2, 14, dsLastRow - 1).getValues();
-  let wolla = dataSet.getRange(2, 15, dsLastRow - 1).getValues();
+  let cell = dataSet.getRange(2, 14, dsLastRow - 1).getValues();
+  let fibGla = dataSet.getRange(2, 15, dsLastRow - 1).getValues();
+  let synth = dataSet.getRange(2, 16, dsLastRow - 1).getValues();
+  let talc = dataSet.getRange(2, 17, dsLastRow - 1).getValues();
+  let wolla = dataSet.getRange(2, 18, dsLastRow - 1).getValues();
 
   // get sample ids from the dbc to compare to lab data
   let dbcHoMatNum = dbc.getRange(2, 1, dbcLastRow - 1).getValues();
