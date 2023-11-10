@@ -25,9 +25,11 @@ function onOpen() {
         .addItem('Layers - Continuous Linetype v1.0', 'createLayersContinuousLinetype')
         .addItem('MLeaders LBP', 'createLBPMLeaders')
         .addItem('Layers LBP', 'createLBPLayers'))
-      .addSubMenu(SpreadsheetApp.getUi().createMenu('Sample DB Scripts')
+      .addSubMenu(SpreadsheetApp.getUi().createMenu('ACM DB Scripts')
         .addItem('Create App A', 'createAppA')
         .addItem('Update DB', 'updateDB'))
+      .addSubMenu(SpreadsheetApp.getUi().createMenu('LBP DB Scripts')
+        .addItem('Create App A', 'createLBPAppA'))
       .addSubMenu(SpreadsheetApp.getUi().createMenu('Survey Report Script')
         .addItem('Create Report Data Sheet', 'createSurveyRep'))
       .addToUi();
