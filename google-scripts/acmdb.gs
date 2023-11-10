@@ -1,39 +1,16 @@
-/* --- LAST UPDATED: 11/7/2023 --- */
-let ss;
-
-// setting global constants for row and col numbers so it 
-// state global variables for the sample DB
-let sampleDB;
-let sdbLastRow;
-let sdbLastCol;
-
-// state global variables for lab data
-let dataSet;
-let dsLastRow;
-let dsLastCol;
-
-// state global variables for the dbc
-let dbc;
-let dbcLastRow;
-let dbcLastCol;
-
-// state global variables for AppA
-let appa;
-let appaLastRow;
-let appaLastCol;
 
 // function for when the user wants to create an app a
 function createAppA() {
   let ui = SpreadsheetApp.getUi();
-  ss = SpreadsheetApp.getActiveSpreadsheet();
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
   
-  sampleDB = ss.getActiveSheet()
-  sdbLastRow = sampleDB.getLastRow();
-  sdbLastCol = sampleDB.getLastColumn();
+  let sampleDB = ss.getActiveSheet()
+  let sdbLastRow = sampleDB.getLastRow();
+  let sdbLastCol = sampleDB.getLastColumn();
 
-  dataSet = ss.getSheetByName("DATA");
-  dsLastRow = dataSet.getLastRow();
-  dsLastCol = dataSet.getLastColumn();
+  let dataSet = ss.getSheets()[ss.getSheets().length - 1];
+  let dsLastRow = dataSet.getLastRow();
+  let dsLastCol = dataSet.getLastColumn();
 
   // check if dbc sheet exists, if not create it
   // and set its values
@@ -91,27 +68,19 @@ function createAppA() {
 // function for when the user wants to update the sample db
 function updateDB() {
   let ui = SpreadsheetApp.getUi();
-  ss = SpreadsheetApp.getActiveSpreadsheet();
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
   
-  sampleDB = ss.getActiveSheet()
-  sdbLastRow = sampleDB.getLastRow();
-  sdbLastCol = sampleDB.getLastColumn();
+  let sampleDB = ss.getActiveSheet()
+  let sdbLastRow = sampleDB.getLastRow();
+  let sdbLastCol = sampleDB.getLastColumn();
 
-  dataSet = ss.getSheetByName("DATA");
-  dsLastRow = dataSet.getLastRow();
-  dsLastCol = dataSet.getLastColumn();
+  let dataSet = ss.getSheetByName("DATA");
+  let dsLastRow = dataSet.getLastRow();
+  let dsLastCol = dataSet.getLastColumn();
 
   // check if dbc sheet exists, if not create it
   // and set its values
-  if (!ss.getSheetByName("dbc")) {
-    dbc = ss.insertSheet("dbc");
-    dbcLastRow = dbc.getLastRow();
-    dbcLastCol = dbc.getLastColumn();
-  } else {
-    dbc = ss.getSheetByName("dbc");
-    dbcLastRow = dbc.getLastRow();
-    dbcLastCol = dbc.getLastColumn();
-  }
+  if (!ss.getSheetByName("dbc")) ss.insertSheet("dbc");
 
   // create location variable, then prompt user for project location
   let location = '';
@@ -137,12 +106,48 @@ function updateDB() {
 }
 
 function createDBC() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sampleDB = ss.getActiveSheet();
+  let sdbLastRow = sampleDB.getLastRow();
+  let sdbLastCol = sampleDB.getLastColumn();
+  let dbc = ss.getSheetByName('dbc');
+
   // get the header names from the sample DB
   // loop through it to find the needed columns for the dbc
   let headers = sampleDB.getRange(1, 1, 1, sdbLastCol).getValues();
   
-  
-  for (let i = 0; i < headers[0].length; i++) {
+  for (let i of headers[0]) {
+    switch (i.trim()) {
+      case 'Homogeneous Material Number': 
+        var hoMatNum = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Homogenous Material Number':
+        var hoMatNum = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Sample ID':
+        var sampID = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Material Type':
+        var matType = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Material Description':
+        var matDesc = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Friable':
+        var friable = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Condition':
+        var cond = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Room/Area 1':
+        var rA = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Room/Area':
+        var rA = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;  
+    }
+  }
+  /*for (let i = 0; i < headers[0].length; i++) {
     if (headers[0][i].trim() == 'Homogeneous Material Number' || headers[0][i].trim() == 'Homogenous Material Number') var hoMatNum = sampleDB.getRange(1, i+1, sdbLastRow);
     if (headers[0][i].trim() == 'Sample ID') var sampID = sampleDB.getRange(1, i+1, sdbLastRow);
     if (headers[0][i].trim() == 'Material Type') var matType = sampleDB.getRange(1, i+1, sdbLastRow);
@@ -150,11 +155,11 @@ function createDBC() {
     if (headers[0][i].trim() == 'Friable') var friable = sampleDB.getRange(1, i+1, sdbLastRow);
     if (headers[0][i].trim() == 'Condition') var cond = sampleDB.getRange(1, i+1, sdbLastRow);
     if (headers[0][i].trim() == 'Room/Area 1' || headers[0][i].trim() == 'Room/Area') var rA = sampleDB.getRange(1, i+1, sdbLastRow);
-  }
+  }*/
   
   // insert values from sample db to their respective ranges in the dbc
   if (hoMatNum !== undefined) {
-    hoMatNum.copyValuesToRange(dbc, 1, 1, 1, sdbLastRow);
+    dbc.getRange
   } else {
     throw new Error('Can\'t find "Homogeneous Material Number" column header. Check it is written exactly as: "Homogeneous Material Number"')
   }
@@ -284,25 +289,60 @@ function formatLabData() {
 
 // function to create the barebones, non-formatted app a
 function createLabExport() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sampleDB = ss.getActiveSheet();
+  let sdbLastRow = sampleDB.getLastRow();
+  let sdbLastCol = sampleDB.getLastColumn();
+  let dataSet = ss.getSheetByName('DATA');
+  let dsLastRow = dataSet.getLastRow();
+  let dsLastCol = dataSet.getLastColumn();
+  
   // get sample ids from the lab data
-  let sampID = dataSet.getRange(2, 8, dsLastRow - 1).getValues();
+  let sids = dataSet.getRange(2, 8, dsLastRow - 1).getValues();
   let homArea = [];
   // remove last letter from SampleID and store in homogeneous area array
   for (let i = 0; i < sampID.length; i++) {
     homArea[i] = [sampID[i].toString().slice(0, -1)];
   }
 
-  // get values from the dbc
-  let dbcSampID = dbc.getRange(2, 2, dbcLastRow - 1).getValues();
-  let dbcMatType = dbc.getRange(2, 3, dbcLastRow - 1).getValues();
-  let dbcMatDesc = dbc.getRange(2, 4, dbcLastRow - 1).getValues();
-  let dbcFriable = dbc.getRange(2, 5, dbcLastRow - 1).getValues();
-  let dbcCond = dbc.getRange(2, 6, dbcLastRow - 1).getValues();
-  let dbcRA = dbc.getRange(2, 7, dbcLastRow - 1).getValues();
+  // get the header names from the sample DB
+  // loop through it to find the needed columns for the dbc
+  let headers = sampleDB.getRange(1, 1, 1, sdbLastCol).getValues();
+  for (let i of headers[0]) {
+    switch (i.trim()) {
+      case 'Homogeneous Material Number': 
+        var hoMatNum = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Homogenous Material Number':
+        var hoMatNum = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Sample ID':
+        var sampID = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Material Type':
+        var matType = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Material Description':
+        var matDesc = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Friable':
+        var friable = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Condition':
+        var cond = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Room/Area 1':
+        var rA = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;
+      case 'Room/Area':
+        var rA = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        break;  
+    }
+  }
 
   // insert new columns and add headers
-  let headers = [['Homogeneous Area', 'Material Type', 'Material Description', 'Friable', 'Condition', 'Sample ID', 'Sample Location', 'Layer (% of Combined Sample)', 'Asbestos %']];
-  appa.getRange("A1:I1").setValues(headers);
+  let appaHead = [['Homogeneous Area', 'Material Type', 'Material Description', 'Friable', 'Condition', 'Sample ID', 'Sample Location', 'Layer (% of Combined Sample)', 'Asbestos %']];
+  appa.getRange("A1:I1").setValues(appaHead);
 
   // initialize empty arrays to store the parsed data
   let matType = [];
