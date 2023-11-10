@@ -10,7 +10,7 @@ function lbpLabExport() {
   let lbpDB = ss.getActiveSheet();
   let dbLR = lbpDB.getLastRow();
   let dbLC = lbpDB.getLastColumn();
-  let labRes = ss.getSheetByName("1");
+  let labRes = ss.getSheets()[ss.getSheets().length - 1];
   let labLR = labRes.getLastRow();
   let labLC = labRes.getLastColumn();
 
