@@ -3,38 +3,7 @@
 function createAppA() {
   let ui = SpreadsheetApp.getUi();
   let ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-  let sampleDB = ss.getActiveSheet()
-  let sdbLastRow = sampleDB.getLastRow();
-  let sdbLastCol = sampleDB.getLastColumn();
-
-  let dataSet = ss.getSheets()[ss.getSheets().length - 1];
-  let dsLastRow = dataSet.getLastRow();
-  let dsLastCol = dataSet.getLastColumn();
-
-  // check if dbc sheet exists, if not create it
-  // and set its values
-  if (!ss.getSheetByName("dbc")) {
-    dbc = ss.insertSheet("dbc");
-    dbcLastRow = dbc.getLastRow();
-    dbcLastCol = dbc.getLastColumn();
-  } else {
-    dbc = ss.getSheetByName("dbc");
-    dbcLastRow = dbc.getLastRow();
-    dbcLastCol = dbc.getLastColumn();
-  }
-
-  // check if AppA sheet exists, if not create it
-  // and set its values
-  if (!ss.getSheetByName("AppA")) {
-    appa = ss.insertSheet("AppA");
-    appaLastRow = appa.getLastRow();
-    appaLastCol = appa.getLastColumn();
-  } else {
-    appa = ss.getSheetByName("AppA");
-    appaLastRow = appa.getLastRow();
-    appaLastCol = appa.getLastColumn();
-  }
+  let sampleDB = ss.getActiveSheet();
 
   // create location variable, then prompt user for project location
   let location = '';
@@ -44,14 +13,14 @@ function createAppA() {
 
   // call app a creation script with prompted user location
   try {
-    createDBC();
+    createdbc();
     formatLabData();
     createLabExport();
     handleAsbestos();
     createCopyAppA();
     formatExport();
     colorAsbestos(location);
-    handleAssumed(location);
+    handleAssumed(location, sampleDB);
     appafinalFormat();
     updateCoversheet();
     deleteExtraSheets();
@@ -71,8 +40,6 @@ function updateDB() {
   let ss = SpreadsheetApp.getActiveSpreadsheet();
   
   let sampleDB = ss.getActiveSheet()
-  let sdbLastRow = sampleDB.getLastRow();
-  let sdbLastCol = sampleDB.getLastColumn();
 
   let dataSet = ss.getSheetByName("DATA");
   let dsLastRow = dataSet.getLastRow();
@@ -91,7 +58,7 @@ function updateDB() {
   // call sample db updating script with prompted user location
   try {
     formatLabData();
-    createDBC();
+    createdbc();
     addDBVals();
     formatDB(location);
     deleteExtraSheets();
@@ -105,115 +72,63 @@ function updateDB() {
   }
 }
 
-function createDBC() {
-  let ss = SpreadsheetApp.getActiveSpreadsheet();
+function createdbc() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet()
   let sampleDB = ss.getActiveSheet();
-  let sdbLastRow = sampleDB.getLastRow();
-  let sdbLastCol = sampleDB.getLastColumn();
-  let dbc = ss.getSheetByName('dbc');
-
-  // get the header names from the sample DB
-  // loop through it to find the needed columns for the dbc
-  let headers = sampleDB.getRange(1, 1, 1, sdbLastCol).getValues();
-  
+  let dbc = ss.insertSheet('dbc');
+  let headers = sampleDB.getRange(1, 1, 1, sampleDB.getLastColumn()).getValues();
   for (let i of headers[0]) {
     switch (i.trim()) {
       case 'Homogeneous Material Number': 
-        var hoMatNum = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;
       case 'Homogenous Material Number':
-        var hoMatNum = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        let hoMatNum = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sampleDB.getLastRow()).getValues();
+        dbc.getRange(1, 1, hoMatNum.length).setValues(hoMatNum);
         break;
       case 'Sample ID':
-        var sampID = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        let sampID = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sampleDB.getLastRow()).getValues();
+        dbc.getRange(1, 2, sampID.length).setValues(sampID);
         break;
       case 'Material Type':
-        var matType = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        let matType = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sampleDB.getLastRow()).getValues();
+        dbc.getRange(1, 3, matType.length).setValues(matType);
         break;
       case 'Material Description':
-        var matDesc = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        let matDesc = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sampleDB.getLastRow()).getValues();
+        dbc.getRange(1, 4, matDesc.length).setValues(matDesc);
         break;
       case 'Friable':
-        var friable = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        let friable = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sampleDB.getLastRow()).getValues();
+        dbc.getRange(1, 5, friable.length).setValues(friable);
         break;
       case 'Condition':
-        var cond = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        let cond = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sampleDB.getLastRow()).getValues();
+        dbc.getRange(1, 6, cond.length).setValues(cond);
         break;
       case 'Room/Area 1':
-        var rA = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;
       case 'Room/Area':
-        var rA = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
+        let loc = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sampleDB.getLastRow()).getValues();
+        dbc.getRange(1, 7, loc.length).setValues(loc);
         break;  
     }
   }
-  /*for (let i = 0; i < headers[0].length; i++) {
-    if (headers[0][i].trim() == 'Homogeneous Material Number' || headers[0][i].trim() == 'Homogenous Material Number') var hoMatNum = sampleDB.getRange(1, i+1, sdbLastRow);
-    if (headers[0][i].trim() == 'Sample ID') var sampID = sampleDB.getRange(1, i+1, sdbLastRow);
-    if (headers[0][i].trim() == 'Material Type') var matType = sampleDB.getRange(1, i+1, sdbLastRow);
-    if (headers[0][i].trim() == 'Material Description') var matDesc = sampleDB.getRange(1, i+1, sdbLastRow);
-    if (headers[0][i].trim() == 'Friable') var friable = sampleDB.getRange(1, i+1, sdbLastRow);
-    if (headers[0][i].trim() == 'Condition') var cond = sampleDB.getRange(1, i+1, sdbLastRow);
-    if (headers[0][i].trim() == 'Room/Area 1' || headers[0][i].trim() == 'Room/Area') var rA = sampleDB.getRange(1, i+1, sdbLastRow);
-  }*/
-  
-  // insert values from sample db to their respective ranges in the dbc
-  if (hoMatNum !== undefined) {
-    dbc.getRange
-  } else {
-    throw new Error('Can\'t find "Homogeneous Material Number" column header. Check it is written exactly as: "Homogeneous Material Number"')
-  }
-  if (sampID !== undefined) {
-    sampID.copyValuesToRange(dbc, 2, 2, 1, sdbLastRow);
-  } else {
-    throw new Error('Can\'t find "Sample ID" column header. Check it is written exactly as: "Sample ID"')
-  }
-  if (matType !== undefined) {
-    matType.copyValuesToRange(dbc, 3, 3, 1, sdbLastRow);
-  } else {
-    throw new Error('Can\'t find "Material Type" column header. Check it is written exactly as: "Material Type"')
-  }
-  if (matDesc !== undefined) {
-    matDesc.copyValuesToRange(dbc, 4, 4, 1, sdbLastRow);
-  } else {
-    throw new Error('Can\'t find "Material Description" column header. Check it is written exactly as: "Material Description"')
-  }
-  if (friable !== undefined) {
-    friable.copyValuesToRange(dbc, 5, 5, 1, sdbLastRow);
-  } else {
-    throw new Error('Can\'t find "Friable" column header. Check it is written exactly as: "Friable"')
-  }
-  if (cond !== undefined) {
-    cond.copyValuesToRange(dbc, 6, 6, 1, sdbLastRow);
-  } else {
-    throw new Error('Can\'t find "Condition" column header. Check it is written exactly as: "Condition"')
-  }
-  if (rA !== undefined) {
-    rA.copyValuesToRange(dbc, 7, 7, 1, sdbLastRow);
-  } else {
-    throw new Error('Can\'t find "Room/Area" column header. Check it is written exactly as: "Room/Area 1" or "Room/Area"')
-  }
-
-  // update the last row and column for the dbc
-  dbcLastRow = dbc.getLastRow();
-  dbcLastCol = dbc.getLastColumn();
 }
 
 function formatLabData() {
+  let dataSet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('DATA');
   // get the values for all the fibrous material percentages
-  let cell = dataSet.getRange(2, 14, dsLastRow - 1).getValues();
-  let fibGla = dataSet.getRange(2, 15, dsLastRow - 1).getValues();
-  let synth = dataSet.getRange(2, 16, dsLastRow - 1).getValues();
-  let talc = dataSet.getRange(2, 17, dsLastRow - 1).getValues();
-  let wolla = dataSet.getRange(2, 18, dsLastRow - 1).getValues();
+  let cell = dataSet.getRange(2, 14, dataSet.getLastRow() - 1).getValues();
+  let fibGla = dataSet.getRange(2, 15, dataSet.getLastRow() - 1).getValues();
+  let synth = dataSet.getRange(2, 16, dataSet.getLastRow() - 1).getValues();
+  let talc = dataSet.getRange(2, 17, dataSet.getLastRow() - 1).getValues();
+  let wolla = dataSet.getRange(2, 18, dataSet.getLastRow() - 1).getValues();
 
   // get the values for all layer numbers
-  let layerNum = dataSet.getRange(2, 20, dsLastRow - 1).getValues();
+  let layerNum = dataSet.getRange(2, 20, dataSet.getLastRow() - 1).getValues();
 
   // get the values for all the percentage of asbestos
-  let asb1Quant = dataSet.getRange(2, 24, dsLastRow - 1).getValues();
-  let asb2Quant = dataSet.getRange(2, 26, dsLastRow - 1).getValues();
-  let asb3Quant = dataSet.getRange(2, 28, dsLastRow - 1).getValues();
+  let asb1Quant = dataSet.getRange(2, 24, dataSet.getLastRow() - 1).getValues();
+  let asb2Quant = dataSet.getRange(2, 26, dataSet.getLastRow() - 1).getValues();
+  let asb3Quant = dataSet.getRange(2, 28, dataSet.getLastRow() - 1).getValues();
   
   // convert all NDs to 0s, all Trace to 0.99(as a place holder), and all other values to numbers instead of strings
   for (let i = 0; i < cell.length; i++) {
@@ -276,130 +191,71 @@ function formatLabData() {
     else asb3Quant[i][0] = Number(asb3Quant[i][0]);
   }
   // insert newly formatted data back to the lab data set
-  dataSet.getRange(2, 14, dsLastRow - 1).setValues(cell);
-  dataSet.getRange(2, 15, dsLastRow - 1).setValues(fibGla);
-  dataSet.getRange(2, 16, dsLastRow - 1).setValues(synth);
-  dataSet.getRange(2, 17, dsLastRow - 1).setValues(talc);
-  dataSet.getRange(2, 18, dsLastRow - 1).setValues(wolla);
+  dataSet.getRange(2, 14, dataSet.getLastRow() - 1).setValues(cell);
+  dataSet.getRange(2, 15, dataSet.getLastRow() - 1).setValues(fibGla);
+  dataSet.getRange(2, 16, dataSet.getLastRow() - 1).setValues(synth);
+  dataSet.getRange(2, 17, dataSet.getLastRow() - 1).setValues(talc);
+  dataSet.getRange(2, 18, dataSet.getLastRow() - 1).setValues(wolla);
 
-  dataSet.getRange(2, 24, dsLastRow - 1).setValues(asb1Quant);
-  dataSet.getRange(2, 26, dsLastRow - 1).setValues(asb2Quant);
-  dataSet.getRange(2, 28, dsLastRow - 1).setValues(asb3Quant);
+  dataSet.getRange(2, 24, dataSet.getLastRow() - 1).setValues(asb1Quant);
+  dataSet.getRange(2, 26, dataSet.getLastRow() - 1).setValues(asb2Quant);
+  dataSet.getRange(2, 28, dataSet.getLastRow() - 1).setValues(asb3Quant);
 }
 
 // function to create the barebones, non-formatted app a
 function createLabExport() {
   let ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sampleDB = ss.getActiveSheet();
-  let sdbLastRow = sampleDB.getLastRow();
-  let sdbLastCol = sampleDB.getLastColumn();
+  let dbc = ss.getSheetByName('dbc');
   let dataSet = ss.getSheetByName('DATA');
-  let dsLastRow = dataSet.getLastRow();
-  let dsLastCol = dataSet.getLastColumn();
   
+  let sampID = dbc.getRange(1, 2, dbc.getLastRow()).getValues();
+  let matType = dbc.getRange(1, 3, dbc.getLastRow()).getValues();
+  let matDesc = dbc.getRange(1, 4, dbc.getLastRow()).getValues();
+  let friable = dbc.getRange(1, 5, dbc.getLastRow()).getValues();
+  let cond = dbc.getRange(1, 6, dbc.getLastRow()).getValues();
+  let loc = dbc.getRange(1, 7, dbc.getLastRow()).getValues();
+
   // get sample ids from the lab data
-  let sids = dataSet.getRange(2, 8, dsLastRow - 1).getValues();
+  let sids = dataSet.getRange(1, 8, dataSet.getLastRow()).getValues();
   let homArea = [];
   // remove last letter from SampleID and store in homogeneous area array
-  for (let i = 0; i < sampID.length; i++) {
-    homArea[i] = [sampID[i].toString().slice(0, -1)];
+  for (let i of sids) {
+    homArea.push([i[0].toString().slice(0, -1)]);
   }
 
-  // get the header names from the sample DB
-  // loop through it to find the needed columns for the dbc
-  let headers = sampleDB.getRange(1, 1, 1, sdbLastCol).getValues();
-  for (let i of headers[0]) {
-    switch (i.trim()) {
-      case 'Homogeneous Material Number': 
-        var hoMatNum = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;
-      case 'Homogenous Material Number':
-        var hoMatNum = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;
-      case 'Sample ID':
-        var sampID = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;
-      case 'Material Type':
-        var matType = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;
-      case 'Material Description':
-        var matDesc = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;
-      case 'Friable':
-        var friable = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;
-      case 'Condition':
-        var cond = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;
-      case 'Room/Area 1':
-        var rA = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;
-      case 'Room/Area':
-        var rA = sampleDB.getRange(1, headers[0].indexOf(i) + 1, sdbLastRow).getValues();
-        break;  
-    }
-  }
-
-  // insert new columns and add headers
-  let appaHead = [['Homogeneous Area', 'Material Type', 'Material Description', 'Friable', 'Condition', 'Sample ID', 'Sample Location', 'Layer (% of Combined Sample)', 'Asbestos %']];
-  appa.getRange("A1:I1").setValues(appaHead);
-
-  // initialize empty arrays to store the parsed data
-  let matType = [];
-  let matDesc = [];
-  let friable = [];
-  let cond = [];
-  let rA = [];
-  
+  rowsA = [];
+  let layerNum = dataSet.getRange(2, 20, dataSet.getLastRow() - 1).getValues();
+  let layer = dataSet.getRange(2, 21, dataSet.getLastRow() - 1).getValues();
+  let pOfTotal = dataSet.getRange(2, 22, dataSet.getLastRow() - 1).getValues();
   // match sample ids from lab data to sample ids from dbc
   // loop through data set sample ids
-  for (let i = 0; i < sampID.length; i++) {
-    for (let j = 0; j < dbcSampID.length; j++) {
-      if (sampID[i][0] === dbcSampID[j][0]) {
-        sampID[i] = [dbcSampID[j]];
-        matType[i] = [dbcMatType[j]];
-        matDesc[i] = [dbcMatDesc[j]];
-        friable[i] = [dbcFriable[j]];
-        cond[i] = [dbcCond[j]];
-        rA[i] = [dbcRA[j]];
+  for (let i = 0; i < sids.length; i++) {
+    for (let j = 0; j < sampID.length; j++) {
+      if (sids[i][0] === sampID[j][0]) {
+        rowsA.push([`${homArea[i]}`, `${matType[j]}`, `${matDesc[j]}`, `${friable[j]}`, `${cond[j]}`, `${sids[i]}`, `${loc[j]}`, `${layerNum[i]}\t${layer[i]} (${pOfTotal[i]}%)`]);
       }
     }
   }
-
-  // get data needed for the "Layer (% of Combined Sample)" column
-  // merge it all together into one array
-  let layerNum = dataSet.getRange(2, 20, dsLastRow - 1).getValues();
-  let layer = dataSet.getRange(2, 21, dsLastRow - 1).getValues();
-  let pOfTotal = dataSet.getRange(2, 22, dsLastRow - 1).getValues();
-  let layerP = [];
-  for (let i = 0; i < layer.length; i++) {
-    layerP[i] = [`${layerNum[i]}     ${layer[i]} (${pOfTotal[i]}%)`];
-  }
-  
   // setValues for added columns using the 2D arrays
-  appa.getRange(2, 1, homArea.length).setValues(homArea);
-  appa.getRange(2, 2, matType.length).setValues(matType);
-  appa.getRange(2, 3, matDesc.length).setValues(matDesc);
-  appa.getRange(2, 4, friable.length).setValues(friable);
-  appa.getRange(2, 5, cond.length).setValues(cond);
-  appa.getRange(2, 6, sampID.length).setValues(sampID);
-  appa.getRange(2, 7, rA.length).setValues(rA);
-  appa.getRange(2, 8, layerP.length).setValues(layerP);
-  
-  // update the last row and column for app a
-  appaLastRow = appa.getLastRow();
-  appaLastCol = appa.getLastColumn();
+  // insert new columns and add headers
+  let appa = ss.insertSheet('App A')
+  let appaHead = [['Homogeneous Area', 'Material Type', 'Material Description', 'Friable', 'Condition', 'Sample ID', 'Sample Location', 'Layer (% of Combined Sample)', 'Asbestos %']];
+  appa.getRange("A1:I1").setValues(appaHead);
+  appa.getRange(2, 1, rowsA.length, 8).setValues(rowsA);
 }
 
 // function that reformats asbestos lab data
 function handleAsbestos() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  let appa = ss.getSheetByName('App A');
+  let dataSet = ss.getSheetByName('DATA');
   // get the values and names of all asbestos samples
-  let asb1Name = dataSet.getRange(2, 23, dsLastRow - 1).getValues();
-  let asb1Quant = dataSet.getRange(2, 24, dsLastRow - 1).getValues();
-  let asb2Name = dataSet.getRange(2, 25, dsLastRow - 1).getValues();
-  let asb2Quant = dataSet.getRange(2, 26, dsLastRow - 1).getValues();
-  let asb3Name = dataSet.getRange(2, 27, dsLastRow - 1).getValues();
-  let asb3Quant = dataSet.getRange(2, 28, dsLastRow - 1).getValues();
+  let asb1Name = dataSet.getRange(2, 23, dataSet.getLastRow() - 1).getValues();
+  let asb1Quant = dataSet.getRange(2, 24, dataSet.getLastRow() - 1).getValues();
+  let asb2Name = dataSet.getRange(2, 25, dataSet.getLastRow() - 1).getValues();
+  let asb2Quant = dataSet.getRange(2, 26, dataSet.getLastRow() - 1).getValues();
+  let asb3Name = dataSet.getRange(2, 27, dataSet.getLastRow() - 1).getValues();
+  let asb3Quant = dataSet.getRange(2, 28, dataSet.getLastRow() - 1).getValues();
   
   // initialize empty arrays for each sample's total asbestos content
   // and asbestos quantities
@@ -434,18 +290,20 @@ function handleAsbestos() {
       totAsb[i] = [`${a1Q[i]}% ${asb1Name[i][0]}, ${a2Q[i]}% ${asb2Name[i][0]}, ${a3Q[i]}% ${asb3Name[i][0]}`];
     } else totAsb[i] = ['ND'];
   }
-  
   // set the values from the array to the "Asbestos %" column
   appa.getRange(2, 9, totAsb.length).setValues(totAsb);
 }
 
 function createCopyAppA() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  let appa = ss.getSheetByName('App A');
   let copy = ss.insertSheet("copy");
-  let full = appa.getRange(1, 1, appaLastRow, appaLastCol);
+  let full = appa.getRange(1, 1, appa.getLastRow(), appa.getLastColumn());
   full.copyValuesToRange(copy, 1, 1, 1, 1);
 }
 
 function formatExport() {
+  let appa = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('App A');
   appa.activate();
   // get the range that contains Homogeneous Area,	Material Type,	Material Description,	Friable,	Condition
   // and range that contains Sample ID,	Sample Location
@@ -453,7 +311,7 @@ function formatExport() {
   let sISL = appa.getRange(2, 6, 1, 2);
 
   // sort based off material order
-  sortOrder(appa, appaLastRow, appaLastCol);
+  sortOrder(appa, appa.getLastRow(), appa.getLastColumn());
 
   // merge cells for same homogeneous area #s and merge cells for same sample ID #s
   mergeSameCells(hAMtMdFC, appa, 0, 5);
@@ -462,7 +320,9 @@ function formatExport() {
 
 // function that handles coloring postive asbestos samples
 function colorAsbestos(location) {
-  let asbPerc = appa.getRange(2, 9, appaLastRow - 1).getValues();
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  let appa = ss.getActiveSheet();
+  let asbPerc = appa.getRange(2, 9, appa.getLastRow() - 1).getValues();
   // if the user inputs japan as the project location color red and bold all positive samples
   // else bold and color non trace samples red and trace samples color orange
   if (location === 'JAPAN') {
@@ -470,8 +330,8 @@ function colorAsbestos(location) {
       if (asbPerc[i][0] != 'ND') {
         let mergedAsb = [];
         mergedAsb = appa.getRange(i+2, 1, 1, 7).getMergedRanges();
-        appa.getRange(i+2, 1, 1, appaLastCol).setFontColor("red");
-        appa.getRange(i+2, 1, 1, appaLastCol).setFontWeight("bold");
+        appa.getRange(i+2, 1, 1, appa.getLastColumn()).setFontColor("red");
+        appa.getRange(i+2, 1, 1, appa.getLastColumn()).setFontWeight("bold");
         if (mergedAsb.length !== 0) {
           for (let j = 0; j < mergedAsb.length; j++) {
             mergedAsb[j].setFontColor("red");
@@ -485,7 +345,7 @@ function colorAsbestos(location) {
       if (asbPerc[i][0].includes("<")) {
         let mergedTrace = [];
         mergedTrace = appa.getRange(i+2, 1, 1, 9).getMergedRanges();
-        appa.getRange(i+2, 1, 1, appaLastCol).setFontColor("orange")
+        appa.getRange(i+2, 1, 1, appa.getLastColumn()).setFontColor("orange")
         if (mergedTrace.length !== 0) {
           for (let j = 0; j < mergedTrace.length; j++) {
             if (mergedTrace[j].getFontWeight() !== "bold") mergedTrace[j].setFontColor("orange")
@@ -494,8 +354,8 @@ function colorAsbestos(location) {
       } else if (asbPerc[i][0].includes("%") && !asbPerc[i][0].includes("<")) {
         let mergedAsb = []
         mergedAsb = appa.getRange(i+2, 1, 1, 7).getMergedRanges();
-        appa.getRange(i+2, 1, 1, appaLastCol).setFontColor("red");
-        appa.getRange(i+2, 1, 1, appaLastCol).setFontWeight("bold");
+        appa.getRange(i+2, 1, 1, appa.getLastColumn()).setFontColor("red");
+        appa.getRange(i+2, 1, 1, appa.getLastColumn()).setFontWeight("bold");
         if (mergedAsb.length !== 0) {
           for (let j = 0; j < mergedAsb.length; j++) {
             mergedAsb[j].setFontColor("red");
@@ -507,25 +367,23 @@ function colorAsbestos(location) {
   }
 }
 
-function handleAssumed(location) {
+function handleAssumed(location, sampleDB) {
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  let appa = ss.getSheetByName('App A');
   let copy = ss.getSheetByName("copy");
-  let copyLR = copy.getLastRow();
+  let dbc = ss.getSheetByName('dbc');
 
-  let sdbHeaders = sampleDB.getRange(1, 1, 1, sdbLastCol).getValues();
-  let dbcHoMatNum = dbc.getRange(2, 1, dbcLastRow - 1).getValues();
-  let dbcSampID = dbc.getRange(2, 2, dbcLastRow - 1).getValues();
-  let dbcMatType = dbc.getRange(2, 3, dbcLastRow - 1).getValues();
-  let dbcMatDesc = dbc.getRange(2, 4, dbcLastRow - 1).getValues();
-  let dbcFriable = dbc.getRange(2, 5, dbcLastRow - 1).getValues();
-  let dbcCond = dbc.getRange(2, 6, dbcLastRow - 1).getValues();
-  let dbcRA = dbc.getRange(2, 7, dbcLastRow - 1).getValues();
+  let hoMatNum = dbc.getRange(1, 1, dbc.getLastRow()).getValues();
+  let sampID = dbc.getRange(1, 2, dbc.getLastRow()).getValues();
+  let matType = dbc.getRange(1, 3, dbc.getLastRow()).getValues();
+  let matDesc = dbc.getRange(1, 4, dbc.getLastRow()).getValues();
+  let friable = dbc.getRange(1, 5, dbc.getLastRow()).getValues();
+  let cond = dbc.getRange(1, 6, dbc.getLastRow()).getValues();
+  let loc = dbc.getRange(1, 7, dbc.getLastRow()).getValues();
 
-
-  for (let i = 0; i < sdbHeaders[0].length; i++) {
-    if (sdbHeaders[0][i] == 'Homogeneous Material Number' || sdbHeaders[0][i] == 'Homogenous Material Number') {
-      var hoMatNum = sampleDB.getRange(2, i+1, sdbLastRow - 1).getValues();
-    }
-    if (sdbHeaders[0][i] == 'Asbestos') {
+  let headers = sampleDB.getRange(1, 1, 1, sampleDB.getLastColumn()).getValues();
+  for (let i = 0; i < headers[0].length; i++) {
+    if (headers[0][i] == 'Asbestos') {
       var hA = i+1;
     }
   }
@@ -534,25 +392,21 @@ function handleAssumed(location) {
     let arr = hoMatNum[i][0].split('-');
     if (arr[arr.length - 2] === 'AC' || arr[arr.length - 2] === 'AF' || arr[arr.length - 2] === 'AW' || arr[arr.length - 2] === 'AT' || arr[arr.length - 2] === 'AM') {
       if (location === 'JAPAN') {
-        assumed.push([`${dbcHoMatNum[i]}`, `${dbcMatType[i]}`, `${dbcMatDesc[i]}`, `${dbcFriable[i]}`, `${dbcCond[i]}`, `${dbcSampID[i]}`, `${dbcRA[i]}`, 'N/A', '>0.1% Assumed']);
-      } else assumed.push([`${dbcHoMatNum[i]}`, `${dbcMatType[i]}`, `${dbcMatDesc[i]}`, `${dbcFriable[i]}`, `${dbcCond[i]}`, `${dbcSampID[i]}`, `${dbcRA[i]}`, 'N/A', '>1% Assumed']);
+        assumed.push([`${hoMatNum[i]}`, `${matType[i]}`, `${matDesc[i]}`, `${friable[i]}`, `${cond[i]}`, `${sampID[i]}`, `${loc[i]}`, 'N/A', '>0.1% Assumed']);
+      } else assumed.push([`${hoMatNum[i]}`, `${matType[i]}`, `${matDesc[i]}`, `${friable[i]}`, `${cond[i]}`, `${sampID[i]}`, `${loc[i]}`, 'N/A', '>1% Assumed']);
       sampleDB.getRange(i+2, hA).setValue('ASSUMED')
     }
   }
   if (assumed.length > 0) {
-    appa.getRange(appaLastRow + 1, 1, assumed.length, 9).setValues(assumed);
-    copy.getRange(copyLR + 1, 1, assumed.length, 9).setValues(assumed);
+    appa.getRange(appa.getLastRow() + 1, 1, assumed.length, 9).setValues(assumed);
+    copy.getRange(copy.getLastRow() + 1, 1, assumed.length, 9).setValues(assumed);
   }
 
-  // update the last row and column for app a
-  appaLastRow = appa.getLastRow();
-  appaLastCol = appa.getLastColumn();
-
-  let asbPerc = appa.getRange(2, 9, appaLastRow - 1).getValues()
+  let asbPerc = appa.getRange(2, 9, appa.getLastRow() - 1).getValues()
   for (let i = 0; i < asbPerc.length; i++) {
     if (asbPerc[i][0] === '>0.1% Assumed' || asbPerc[i][0] === '>1% Assumed') {
-      appa.getRange(i+2, 1, 1, appaLastCol).setFontColor("red");
-      appa.getRange(i+2, 1, 1, appaLastCol).setHorizontalAlignment("center");
+      appa.getRange(i+2, 1, 1, appa.getLastColumn()).setFontColor("red");
+      appa.getRange(i+2, 1, 1, appa.getLastColumn()).setHorizontalAlignment("center");
     }
   }
 }
@@ -560,6 +414,10 @@ function handleAssumed(location) {
 function appafinalFormat() {
   // get the coversheet (assuming it's the first sheet)
   // and get the coversheet headers
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  let appa = ss.getSheetByName('App A');
+  let lr = appa.getLastRow()
+  let lc = appa.getLastColumn()
   let cover = ss.getSheets()[0];
   let coverCol1 = cover.getRange(1, 1, cover.getLastRow()).getValues();
 
@@ -573,24 +431,31 @@ function appafinalFormat() {
   }
   
   // entire sheet format
-  let sheet = appa.getRange(1, 1, appaLastRow, appaLastCol);
+  let sheet = appa.getRange(1, 1, appa.getLastRow(), appa.getLastColumn());
   sheet.setBorder(true, true, true, true, true, true);
   sheet.setFontFamily("Arial");
   sheet.setFontSize(11);
 
   // format resize columns and set aligment
-  appa.autoResizeColumns(1, appaLastCol);
-  for (let i = 1; i <= appaLastCol; i++) {
+  for (let i = 1; i <= lc; i++) {
     if (i === 8) {
-      appa.getRange(2, i, appaLastRow).setHorizontalAlignment("left");
-      appa.getRange(2, i, appaLastRow).setVerticalAlignment("middle");
+      appa.getRange(2, i, lr).setHorizontalAlignment("left");
+      appa.getRange(2, i, lr).setVerticalAlignment("middle");
     } else {
-      appa.getRange(2, i, appaLastRow).setHorizontalAlignment("center");
-      appa.getRange(2, i, appaLastRow).setVerticalAlignment("middle");
+      appa.getRange(2, i, lr).setHorizontalAlignment("center");
+      appa.getRange(2, i, lr).setVerticalAlignment("middle");
     }
   }
-  appa.getRange(1, 3, appaLastRow).setWrap(true).setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
+  appa.getRange(1, 3, appa.getLastRow()).setWrap(true).setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
+  appa.setColumnWidth(1, 200);
+  appa.setColumnWidth(2, 125);
   appa.setColumnWidth(3, 250);
+  appa.setColumnWidth(4, 100);
+  appa.setColumnWidth(5, 100);
+  appa.setColumnWidth(6, 200);
+  appa.setColumnWidth(7, 250);
+  appa.setColumnWidth(8, 300);
+  appa.setColumnWidth(9, 250)
 
   // inserts rows needed for the header
   appa.insertRowsBefore(1, 5);
@@ -604,12 +469,12 @@ function appafinalFormat() {
   appa.getRange("A1:I5").setValues(headers);
 
   // header format
-  appa.getRange(1, 1, 1, appaLastCol).mergeAcross().setHorizontalAlignment("center").setFontSize(14);
+  appa.getRange(1, 1, 1, appa.getLastColumn()).mergeAcross().setHorizontalAlignment("center").setFontSize(14);
   appa.getRange(2, 1, 3).setHorizontalAlignment("left").setFontSize(11).setWrap(true).setWrapStrategy(SpreadsheetApp.WrapStrategy.OVERFLOW);
-  appa.getRange(2, appaLastCol, 3).setHorizontalAlignment("right").setFontSize(11).setWrap(true).setWrapStrategy(SpreadsheetApp.WrapStrategy.OVERFLOW);
+  appa.getRange(2, appa.getLastColumn(), 3).setHorizontalAlignment("right").setFontSize(11).setWrap(true).setWrapStrategy(SpreadsheetApp.WrapStrategy.OVERFLOW);
 
   // data header format
-  let dataHeader = appa.getRange(6, 1, 1, appaLastCol);
+  let dataHeader = appa.getRange(6, 1, 1, appa.getLastColumn());
   dataHeader.setHorizontalAlignment("center")
   dataHeader.setBackground("Gainsboro");
   dataHeader.setFontWeight("bold");
@@ -618,27 +483,26 @@ function appafinalFormat() {
 }
 
 function updateCoversheet() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
   let cover = ss.getSheets()[0];
   let copy = ss.getSheetByName("copy");
-  let copyLC = copy.getLastColumn();
-  let copyLR = copy.getLastRow();
 
-  sortOrder(copy, copyLR, copyLC);
+  sortOrder(copy, copy.getLastRow(), copy.getLastColumn());
   
-  let vals = copy.getRange(2, 9, copyLR - 1).getValues();
-  let f = copy.getRange(2, 4, copyLR - 1).getValues();
-  let c = copy.getRange(2, 5, copyLR - 1).getValues();
-  let l = copy.getRange(2, 8, copyLR - 1).getValues();
-  let mt = copy.getRange(2, 3, copyLR - 1).getValues();
-  let lo = copy.getRange(2, 7, copyLR - 1).getValues();
-  let sids = copy.getRange(2, 6, copyLR - 1).getValues();
-  let has = copy.getRange(2, 1, copyLR - 1).getValues();
+  let vals = copy.getRange(2, 9, copy.getLastRow() - 1).getValues();
+  let f = copy.getRange(2, 4, copy.getLastRow() - 1).getValues();
+  let c = copy.getRange(2, 5, copy.getLastRow() - 1).getValues();
+  let l = copy.getRange(2, 8, copy.getLastRow() - 1).getValues();
+  let mt = copy.getRange(2, 3, copy.getLastRow() - 1).getValues();
+  let lo = copy.getRange(2, 7, copy.getLastRow() - 1).getValues();
+  let sids = copy.getRange(2, 6, copy.getLastRow() - 1).getValues();
+  let has = copy.getRange(2, 1, copy.getLastRow() - 1).getValues();
   let asbPerc = [];
   let pos = [];
   let posHA = [];
   let assuA = '';
 
-  for (let i = 0; i < copyLR - 1; i++) {
+  for (let i = 0; i < vals.length; i++) {
     if (vals[i][0] != 'ND') {
       asbPerc[i] = vals[i][0].split(", ");
     } else asbPerc[i] = ['']
@@ -685,6 +549,8 @@ function updateCoversheet() {
 
 // creates excel export of app a 
 function exportAppA() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  let appa = ss.getSheetByName('App A');
   let ssURL = ss.getUrl().slice(0,-5); // https://docs.google.com/spreadsheets/d/<KEY>
   let gid = appa.getSheetId(); // gid
   let expURL = `${ssURL}/export?format=xlsx&gid=${gid}`; // https://docs.google.com/spreadsheets/d/<KEY>/export?format=xlsx&gid=<GID>
@@ -1069,14 +935,12 @@ function deleteExtraSheets() {
   let ss = SpreadsheetApp.getActiveSpreadsheet();
   //let dataSet = ss.getSheetByName("DATA");
   let cols = ss.getSheetByName("COLS")
-  let dbc = ss.getSheetByName("dbc");
   let copy = ss.getSheetByName("copy");
   
 
   //ss.deleteSheet(dataSet);
   if (cols) ss.deleteSheet(cols);
   if (copy) ss.deleteSheet(copy);
-  ss.deleteSheet(dbc);
 }
 
 // recursive function that merges rows if there's a match in the target range
