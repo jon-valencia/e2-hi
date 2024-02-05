@@ -1,4 +1,4 @@
-/* --- LAST UPDATED: 11/06/2023 --- */
+/* --- LAST UPDATED: 01/31/2024 --- */
 
 function createSurveyRep() {
   let ui = SpreadsheetApp.getUi();
@@ -11,46 +11,8 @@ function createSurveyRep() {
   if (response.getSelectedButton() == ui.Button.OK) var trackName = response2.getResponseText();
   else return;
 
-  sampleDB = ss.getActiveSheet()
-  sdbLastRow = sampleDB.getLastRow();
-  sdbLastCol = sampleDB.getLastColumn();
-
-  dataSet = ss.getSheetByName("DATA");
-  dsLastRow = dataSet.getLastRow();
-  dsLastCol = dataSet.getLastColumn();
-
-  // check if dbc sheet exists, if not create it
-  // and set its values
-  if (!ss.getSheetByName("dbc")) {
-    dbc = ss.insertSheet("dbc");
-    dbcLastRow = dbc.getLastRow();
-    dbcLastCol = dbc.getLastColumn();
-  } else {
-    dbc = ss.getSheetByName("dbc");
-    dbcLastRow = dbc.getLastRow();
-    dbcLastCol = dbc.getLastColumn();
-  }
-
-  // check if AppA sheet exists, if not create it
-  // and set its values
-  if (!ss.getSheetByName("copy")) {
-    appa = ss.insertSheet("copy");
-    appaLastRow = appa.getLastRow();
-    appaLastCol = appa.getLastColumn();
-  } else {
-    appa = ss.getSheetByName("copy");
-    appaLastRow = appa.getLastRow();
-    appaLastCol = appa.getLastColumn();
-  }
-
   try {
-    createDBC();
-    formatLabData();
-    createLabExport();
-    handleAsbestos();
-    handleAssumed();
-    updateCoversheet();
-    deleteExtraSheets();
+    acmDesc();
     createAutocratSheet(url, trackName);
   } catch(err) {
     var htmlOutput = HtmlService
@@ -59,6 +21,65 @@ function createSurveyRep() {
       .setHeight(100); //optional
     SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'Script Error Output');
   }
+}
+
+function acmDesc() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getActiveSheet();
+  let cover = ss.getSheets()[0];
+  let fieldWork = sheet.getRange(2, 29, sheet.getLastRow() - 1, 14).getValues();
+  let hasAsbestos = sheet.getRange(2, 79, sheet.getLastRow() - 1).getValues();
+  let asbestosCont = sheet.getRange(2, 80, sheet.getLastRow() - 1).getValues();
+  let asbestosType = sheet.getRange(2, 81, sheet.getLastRow() - 1).getValues();
+  
+  let posHA = [];
+  let posHAFull = [];
+  let posDesc = [];
+  let posFri = [];
+  let posCond = [];
+  let posRooms = [];
+  let posQuant = [];
+  let posAsbQ = [];
+  let posAsbT = [];
+
+  let acm = '';
+  let assACM = '';
+
+  //for (let i of range) console.log(i);
+  for (let i of fieldWork) {
+    let row = fieldWork.indexOf(i)
+    let split = i[0].split('-')
+    let ha = split[split.length - 2] + '-' + split[split.length - 1];
+    
+    if (posHA.indexOf(ha) === -1 && hasAsbestos[row][0] === 'YES') {
+      posHA.push(ha)
+      posHAFull.push(i[0])
+      posDesc.push(i[4])
+      posFri.push(i[5] === 'NF' ? 'non-friable' : i[5])
+      posCond.push(i[6])
+      posRooms.push(i[7])
+      posQuant.push(i[12])
+      posAsbQ.push(`${asbestosCont[row][0]}%`)
+      posAsbT.push(asbestosType[row][0])
+    } else if(posHA.indexOf(ha) > -1 && hasAsbestos[row][0] === 'YES') {
+      if (!posCond[posHA.indexOf(ha)].includes(i[6])) posCond[posHA.indexOf(ha)] += ', ' + i[6];
+      if (!posRooms[posHA.indexOf(ha)].includes(i[7])) posRooms[posHA.indexOf(ha)] += ', ' + i[7];
+      if (!posAsbQ[posHA.indexOf(ha)].includes(`${asbestosCont[row][0]}%`)) posAsbQ[posHA.indexOf(ha)] += `, ${asbestosCont[row][0]}%`;
+      if (!posAsbT[posHA.indexOf(ha)].includes(asbestosType[row][0])) posAsbT[posHA.indexOf(ha)] += ', ' + asbestosType[row][0];
+      posQuant[posHA.indexOf(ha)] += i[12]
+    }
+    if (hasAsbestos[row][0] === 'ASSUMED') {
+      assACM += `\u2022 ${i[4]} (HA ${i[0]}) in ${i[5]}, ${i[6]} condition; observed in the ${i[7]} (approximately ${i[12]} square meters).\n`
+    }
+  }
+  
+  for (let i = 0; i < posHAFull.length; i++) {
+    //console.log(posAsbQ[i].join(', '))
+    acm += `\u2022 ${posAsbQ[i]} ${posAsbT[i]} asbestos was identified in the ${posDesc[i].toLowerCase()} (HA ${posHAFull[i]}) in ${posFri[i].toLowerCase()}, ${posCond[i].toLowerCase()} condition; collected from ${posRooms[i]} (approximately ${posQuant[i]} square meters).\n`
+  }
+  cover.getRange(37, 2).setValue(acm)
+  cover.getRange(38, 2).setValue(assACM)
+  console.log(posFri)
 }
 
 function createAutocratSheet(url, trackName) {
@@ -78,14 +99,13 @@ function createAutocratSheet(url, trackName) {
   // Error checking if can't find building number column and area column
   if (bNos === undefined) throw new Error('Could not find "Building Number" column');
   if (sqftCol === undefined) sqftCol = 'NEED AREA';
-  console.log(sqftCol)
 
   let insp = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1On-MPNHR9MSO0CnJXlEoek17StcftIDHbI9YoGbIvnQ/edit?usp=sharing").getSheets()[0];
   let inspLRow = insp.getLastRow();
   let inspLCol = insp.getLastColumn();
   let initials = insp.getRange(1, 1, inspLRow).getValues();
   for (let i = 0; i < initials.length; i++) {
-    if (initials[i][0] === 'MH') initials[i][0] = 'MDH'; // fixed issue with Marvin's initials being MDH instead of MH on master sheet
+    if (initials[i][0] === 'MDH') initials[i][0] = 'MH'; // fixed issue with Marvin's initials being MDH instead of MH on master sheet
   }
 
   let bNo = cover.getRange(3, 2).getValue();
@@ -95,7 +115,7 @@ function createAutocratSheet(url, trackName) {
   let fTeamFull = cover.getRange(6, 2).getValue().split(", ");
   let bName = cover.getRange(7, 2).getValue();
   let loc = cover.getRange(8, 2).getValue();
-  let survDate = formatDate(cover.getRange(9, 2).getValue())
+  let survDate = cover.getRange(9, 2).getValue();
   let deviations = cover.getRange(10, 2, 5).getValues();
   let totHA = cover.getRange(21, 4).getValue();
   let totSID = cover.getRange(26, 4).getValue();
@@ -119,7 +139,7 @@ function createAutocratSheet(url, trackName) {
   }
   let devs = "";
   for (let i = 0; i < deviations.length; i++) {
-    if (deviations[i][0] !== '' && deviations[i][0] !== 'None' && deviations[i][0] !== 'N/A') {
+    if (deviations[i][0] !== '' && deviations[i][0] !== 'None') {
       devs += `${deviations[i][0]}\n\n`;
     }
   }
@@ -159,18 +179,5 @@ function createAutocratSheet(url, trackName) {
   let aLC = auto.getLastColumn()
   for (let i = 0; i < aLC; i++) {
     if (auto.getRange(2, i+1).getValue() == 'Element Environmental, LLC') auto.getRange(2, i+1).setValue('Inspector, E2')
-  }
-}
-
-function formatDate(date) {
-  let start = date.split(" ")[0];
-  let end = date.split(" ")[2];
-  console.log(end)
-  if(end === undefined) {
-    return new Date(`"${start.split("/")[0]},${start.split("/")[1]},${start.split("/")[2]}"`).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'});
-  } else {
-    const date_start = new Date(`"${start.split("/")[0]},${start.split("/")[1]},${start.split("/")[2]}"`).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'});
-    const date_end = new Date(`"${end.split("/")[0]},${end.split("/")[1]},${end.split("/")[2]}"`).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'});
-    return date_start + " - " + date_end;
   }
 }
