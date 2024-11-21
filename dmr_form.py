@@ -15,21 +15,27 @@ def filter_data(data, form):
         if row['Result'] == 'U':
             result = 'ND'
         else:
-            result = row['Result']    
-        limit = row[2]
+            result = row['Result']
+        if row[2] == 'NS':
+            limit = 'None'
+        else:
+            limit = row[2]
         # kinda of annoying need all these if statements because they didn't name the 
         # form fields consistently throughout all 14 pages -_-
         # page 2 field forms
         if page_num == 2:
+            
             if count == 0:
                 print(f'starting page: {page_num}')
-                result_field = f'P{page_num}C2R1'
+            """    result_field = f'P{page_num}C2R1'
             else:
+                print("hello")
                 result_field = f'P{page_num}C2R2.0.{count * 2 - 1}'
-            
-            
+            """
+
             analyte_field = f'P{page_num}C1R{count + 1}'
-            limit_field = f'P2C2R2.0.{count * 2}'
+            result_field = f'P{page_num}C2R{count * 2}'
+            limit_field = f'P{page_num}C2R{count * 2 + 1}'
 
             data_dict.update({analyte_field : analyte})
             data_dict.update({limit_field : limit})
@@ -260,7 +266,7 @@ def filter_data(data, form):
 
 if __name__ == '__main__':
     # filename of SPCC field form
-    form = "2023 DMR Form template.pdf"
+    form = "test template.pdf"
     #fields = fillpdfs.print_form_fields("new.pdf", page_number=1)
     # print(fields)
 
