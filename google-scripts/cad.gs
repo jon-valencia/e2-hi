@@ -1,4 +1,5 @@
-/*
+
+/* UPDATED 10/24/2025
 A Google Sheets sheet (i.e. one tab) that is either a lab report copy, a dbc/sample database, 
 or a new sheet for script outputs. Can be modified and may either contain information or be empty. 
 */
@@ -193,7 +194,7 @@ function createHALegend(sheetObj){ // takes in mleader sheet, assumes it has alr
   var y = 23;
   var distance = 4;
  
-  var legend = '(command "CLAYER" "N-TEXT")\n(command "COLOR" "BYLAYER")\n(command "LTSCALE" "1")\n';
+  var legend = '(command "CLAYER" "LEGEND")\n(command "COLOR" "BYLAYER")\n(command "LTSCALE" "1")\n';
   legend += '(command "MTEXT" "' + String(x) + ',' + String(y) + '" "' + String(Number(x)+Number(distance)) + ',' + String(y) + '" "\\{HOMOGENEOUS AREAS\\\\P\\\\P'; // legend does not have any tabs
   x += Number(distance);
   var descCol; // init
@@ -230,16 +231,20 @@ function createHALegend(sheetObj){ // takes in mleader sheet, assumes it has alr
       legend += '' + curHA + ' ' + curDesc + '\\\\P\\\\P';
     }
   }
- 
+  
   legend += `\\}")\n\n(defun C:MT2R ; = MText [to] Romans
-  (/ tss tdata)
-  (if (setq tss (ssget "_X" '((0 . "*MTEXT"))))
-    (repeat (setq n (sslength tss))
-      (setq tdata (entget (ssname tss (setq n (1- n)))))
-      (entmod (subst '(7 . "ROMANS") (assoc 7 tdata) tdata))
-      (entmod (subst '(40 . 0.2381) (assoc 40 tdata) tdata))
+  (/ tss n tdata)
+  (if (setq tss (ssget "_X" '((8 . "LEGEND"))))
+    (repeat (setq n (sslength tss)); then
+      (setq
+        tdata (entget (ssname tss (setq n (1- n))))
+        tdata (subst '(7 . "ROMANS") (assoc 7 tdata) tdata); Style
+        tdata (subst '(40 . 0.09) (assoc 40 tdata) tdata); height
+      ); setq
+      (entmod tdata)
     ); repeat
   ); if
+  (princ)
 ); defun
 MT2R\n`
  
@@ -260,6 +265,7 @@ function createLayersHALinetype(){
  
   fileText += '(setvar "expert" 3)\n' // this line is only essential for HA linetypes
   fileText += '(ltscale 1)\n'
+  fileText += '-layer m LEGEND c green LEGEND \n'
  
   var haCol = sheetObj.haCol;
  
@@ -420,7 +426,7 @@ function createLBPMLeaders(){
   console.log(fileText)
  
   let split = curSID.split("-");
-  let facNum = split[split.length - 3].replace("/","_");
+  let facNum = split[split.length - 3];
   fileName = '' + facNum + '_LBPMLeaderGenerator.scr';
   
   console.log(fileName)
@@ -460,7 +466,7 @@ function createLBPLayers(){
   console.log(fileText)
  
   let split = curSID.split('-');
-  let facNum = split[split.length - 3].replace("/","_");
+  let facNum = split[split.length - 3];
   fileName = '' + facNum + '_LBPLayerGenerator.scr';
   
   href = DriveApp.createFile(fileName, fileText).getDownloadUrl();
@@ -470,9 +476,166 @@ function createLBPLayers(){
     .setHeight(50); //optional
   SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'Download below');
  
-} 
- 
-function createRecolor(){ // Last priority
-  throw new Error("NIY");
 }
 
+function createLBPLegend(){ // takes in mleader sheet, assumes it has already been checked for errors
+ 
+  var legend = '(command "CLAYER" "LEGEND")\n(command "COLOR" "BYLAYER")\n(command "LTSCALE" "1")\n';
+ 
+  legend += `\\}")\n\n(defun C:MT2R ; = MText [to] Romans
+  (/ tss n tdata)
+  (if (setq tss (ssget "_X" '((8 . "LEGEND"))))
+    (repeat (setq n (sslength tss)); then
+      (setq
+        tdata (entget (ssname tss (setq n (1- n))))
+        tdata (subst '(7 . "ROMANS") (assoc 7 tdata) tdata); Style
+        tdata (subst '(40 . 0.09) (assoc 40 tdata) tdata); height
+      ); setq
+      (entmod tdata)
+    ); repeat
+  ); if
+  (princ)
+); defun
+MT2R`
+ 
+  return legend;
+}
+
+/* Asbestos Mleader/Hatch Recoloring Script */ 
+function createRecolor(){ // Last priority
+  //throw new Error("NIY");
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  let ui = SpreadsheetApp.getUi()
+  let database = ss.getActiveSheet();
+  let posHAs = [];
+  let traceHAs = [];
+  let posSIDs = [];
+  let traceSIDs = [];
+  let assHAs = [];
+  let doTrace;
+
+  let response = ui.alert('Does this project use trace results?', 'Generally, Japan-based project do not use trace, but US-based projects do.', ui.ButtonSet.YES_NO_CANCEL);
+  switch (response) {
+    case ui.Button.YES:
+      doTrace = true;
+      break;
+    case ui.Button.NO:
+      console.log("yello")
+      doTrace = false;
+      break;
+    default:
+      return;
+  }
+  console.log(doTrace)
+  // Change 2nd number to match 'Asbestos' column in sample database
+  let hasAsbestos = database.getRange(1, 76, database.getLastRow(), 2).getValues();
+
+  // row[0] - 'Asbestos' column in sample database
+  // row[1] - 'Asbestos Content %' column in sample database
+  // 29 - 'Homogeneous Area' column in sample database
+  // 65 - 'Sample ID' column in sample database
+
+  // iterate through 'Asbestos' column, if 'YES', check for '<1' (trace)
+  // separate SIDs based on positive and trace
+  // separate HAs based on positive and trace. If HA has positive and trace samples, HA is positive.
+  for (let row of hasAsbestos) {
+    let rowNum = hasAsbestos.indexOf(row) + 1;
+    if (row[0] == 'YES') {
+      if (row[1] == '<1' && doTrace || row[1] < 1 && doTrace) {
+        traceSIDs.push(database.getRange(rowNum, 65).getValue()) 
+        if (traceHAs.indexOf(database.getRange(rowNum, 29).getValue()) == -1 && posHAs.indexOf(database.getRange(rowNum, 29).getValue()) == -1) 
+          traceHAs.push(database.getRange(rowNum, 29).getValue());
+      }
+      else {
+        posSIDs.push(database.getRange(rowNum, 65).getValue());
+        if (posHAs.indexOf(database.getRange(rowNum, 29).getValue()) == -1) 
+          posHAs.push(database.getRange(rowNum, 29).getValue());
+        // remove from trace HA array if a positive sample is identified for the same HA
+        if (traceHAs.indexOf(database.getRange(rowNum, 29).getValue() > -1) && posHAs.indexOf(database.getRange(rowNum, 29).getValue()) == -1) {
+          let haToRemove = traceHAs.indexOf(database.getRange(rowNum, 29).getValue());
+          traceHAs.splice(haToRemove, 1);
+          posHAs.push(database.getRange(rowNum, 29).getValue());
+        }
+      }
+    }
+  }
+
+  //console.log(posHAs);
+  //console.log(posSIDs);
+
+  let posSIDText = '';
+  let traceSIDText = '';
+  let haText = '';
+
+  // formatting for different types of sample results
+  // '\\L' - underline for posSIDs
+  // '\\Q10' - italics for traceSIDs
+  for (let sid of posSIDs) {
+    posSIDText += `((wcmatch str "*${sid}*") (list "${sid}" "{\\\\L${sid}}"));\n`;
+  }
+  for (let sid of traceSIDs) {
+    traceSIDText += `((wcmatch str "*${sid}*") (list "${sid}" "{\\\\Q10${sid}}"));\n`
+  }
+  for (let ha of posHAs) {
+    haText += `"_color" 10 "${ha}";\n`;
+  }
+
+  for (let ha of traceHAs) {
+    haText += `"_color" 30 "${ha}";\n`
+  }
+
+  //console.log(sidText);
+  //console.log(haText);
+
+  let text = 
+`(defun c:LCA (); = Layer Color Assignment
+  (command "_.layer"
+    ${haText}
+    "";
+  )
+)
+(c:LCA)
+(defun c:REPLACEMLEADERS  (/ sel e)
+    (if (setq sel (ssget '((0 . "MULTILEADER")(8 . "*"))));
+      (repeat (sslength sel)
+            (setq e (vlax-ename->vla-object (ssname sel 0))
+                  str (vla-get-textstring e))
+            (if (setq f	 
+              (cond
+                ${posSIDText}
+            ))
+            (progn 
+                      (vla-put-textstring e
+                      (vl-string-subst (cadr f)(car f) str) )
+                      (vlax-put-property e 'StyleName "E2 ASBESTOS - POS")
+                  )
+                                )
+            (if (setq f	 
+              (cond
+                ${traceSIDText}
+            ))
+            (progn 
+                      (vla-put-textstring e
+                      (vl-string-subst (cadr f)(car f) str) )
+                      (vlax-put-property e 'StyleName "E2 ASBESTOS - TRACE")
+                  )
+                                )
+            (ssdel (ssname sel 0) sel)
+            )
+        )
+        (princ)
+    )
+(c:REPLACEMLEADERS)
+all
+
+`;
+
+  //console.log(text)
+  
+  let href = DriveApp.createFile('recolor_mleaders.scr', text).getDownloadUrl();
+  let htmlOutput = HtmlService
+    .createHtmlOutput('<a target="_blank" href="' + href + '" >Click to download</a>')
+    .setWidth(250) //optional
+    .setHeight(50); //optional
+  SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'Download below');
+}
