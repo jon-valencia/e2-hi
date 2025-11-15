@@ -23,6 +23,7 @@ function onOpen() {
         .addItem('MLeaders v1.0', 'createMLeaders')
         .addItem('Layers - HA Linetype v1.0', 'createLayersHALinetype')
         .addItem('Layers - Continuous Linetype v1.0', 'createLayersContinuousLinetype')
+        .addItem('Recoloring Asbestos','createRecolor')
         .addItem('MLeaders LBP', 'createLBPMLeaders')
         .addItem('Layers LBP', 'createLBPLayers'))
       .addSubMenu(SpreadsheetApp.getUi().createMenu('ACM DB Scripts')
