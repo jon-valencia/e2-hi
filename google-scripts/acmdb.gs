@@ -1,4 +1,3 @@
-/* --- LAST UPDATED: 11/7/2023 --- */
 let ss;
 
 // setting global constants for row and col numbers so it 
@@ -71,12 +70,10 @@ function createAppA() {
     formatLabData();
     createLabExport();
     handleAsbestos();
-    createCopyAppA();
     formatExport();
     colorAsbestos(location);
     handleAssumed(location);
     appafinalFormat();
-    updateCoversheet();
     deleteExtraSheets();
     exportAppA()
   } catch(err) {
@@ -143,6 +140,11 @@ function createDBC() {
   
   
   for (let i = 0; i < headers[0].length; i++) {
+    console.log(headers[0][i])
+    if (headers[0][i].trim() == 'Floor') {
+      console.log('where is floor')
+      var floor = sampleDB.getRange(1, i+1, sdbLastRow)
+    }
     if (headers[0][i].trim() == 'Homogeneous Material Number' || headers[0][i].trim() == 'Homogenous Material Number') var hoMatNum = sampleDB.getRange(1, i+1, sdbLastRow);
     if (headers[0][i].trim() == 'Sample ID') var sampID = sampleDB.getRange(1, i+1, sdbLastRow);
     if (headers[0][i].trim() == 'Material Type') var matType = sampleDB.getRange(1, i+1, sdbLastRow);
@@ -187,6 +189,11 @@ function createDBC() {
     rA.copyValuesToRange(dbc, 7, 7, 1, sdbLastRow);
   } else {
     throw new Error('Can\'t find "Room/Area" column header. Check it is written exactly as: "Room/Area 1" or "Room/Area"')
+  }
+
+  if (floor !== undefined) {
+    console.log('hello')
+    floor.copyValuesToRange(dbc, 8, 8, 1, sdbLastRow);
   }
 
   // update the last row and column for the dbc
@@ -284,6 +291,7 @@ function formatLabData() {
 
 // function to create the barebones, non-formatted app a
 function createLabExport() {
+  let hasMultiFloors = 0;
   // get sample ids from the lab data
   let sampID = dataSet.getRange(2, 8, dsLastRow - 1).getValues();
   let homArea = [];
@@ -299,10 +307,20 @@ function createLabExport() {
   let dbcFriable = dbc.getRange(2, 5, dbcLastRow - 1).getValues();
   let dbcCond = dbc.getRange(2, 6, dbcLastRow - 1).getValues();
   let dbcRA = dbc.getRange(2, 7, dbcLastRow - 1).getValues();
+  let dbcFloor = dbc.getRange(2, 8, dbcLastRow - 1).getValues();
+
+  for (let floor of dbcFloor) {
+    if (floor[0] > 1) {
+      hasMultiFloors = 1;
+      break;
+    }
+  }
 
   // insert new columns and add headers
-  let headers = [['Homogeneous Area', 'Material Type', 'Material Description', 'Friable', 'Condition', 'Sample ID', 'Sample Location', 'Layer (% of Combined Sample)', 'Asbestos %']];
-  appa.getRange("A1:I1").setValues(headers);
+  let headers = [];
+  hasMultiFloors === 1 ? headers = [['Homogeneous Area', 'Material Type', 'Material Description', 'Friable', 'Condition', 'Sample ID', 'Floor', 'Sample Location', 'Layer (% of Combined Sample)', 'Asbestos %']] : headers = [['Homogeneous Area', 'Material Type', 'Material Description', 'Friable', 'Condition', 'Sample ID', 'Sample Location', 'Layer (% of Combined Sample)', 'Asbestos %']]
+  
+  appa.getRange(1, 1, 1, headers[0].length).setValues(headers);
 
   // initialize empty arrays to store the parsed data
   let matType = [];
@@ -310,6 +328,7 @@ function createLabExport() {
   let friable = [];
   let cond = [];
   let rA = [];
+  let floor = [];
   
   // match sample ids from lab data to sample ids from dbc
   // loop through data set sample ids
@@ -322,6 +341,7 @@ function createLabExport() {
         friable[i] = [dbcFriable[j]];
         cond[i] = [dbcCond[j]];
         rA[i] = [dbcRA[j]];
+        floor[i] = [dbcFloor[j]]
       }
     }
   }
@@ -343,8 +363,14 @@ function createLabExport() {
   appa.getRange(2, 4, friable.length).setValues(friable);
   appa.getRange(2, 5, cond.length).setValues(cond);
   appa.getRange(2, 6, sampID.length).setValues(sampID);
-  appa.getRange(2, 7, rA.length).setValues(rA);
-  appa.getRange(2, 8, layerP.length).setValues(layerP);
+  if (hasMultiFloors === 1) {
+    appa.getRange(2, 7, floor.length).setValues(floor);
+    appa.getRange(2, 8, rA.length).setValues(rA);
+    appa.getRange(2, 9, layerP.length).setValues(layerP);
+  } else {
+    appa.getRange(2, 7, rA.length).setValues(rA);
+    appa.getRange(2, 8, layerP.length).setValues(layerP);
+  }
   
   // update the last row and column for app a
   appaLastRow = appa.getLastRow();
@@ -396,7 +422,7 @@ function handleAsbestos() {
   }
   
   // set the values from the array to the "Asbestos %" column
-  appa.getRange(2, 9, totAsb.length).setValues(totAsb);
+  appa.getRange(2, appa.getLastColumn(), totAsb.length).setValues(totAsb);
 }
 
 function createCopyAppA() {
@@ -407,6 +433,16 @@ function createCopyAppA() {
 
 function formatExport() {
   appa.activate();
+  let matDesc = appa.getRange(2, 3, appaLastRow - 1).getValues()
+  let matDescWithLineBreak = []
+  for (let desc of matDesc) {
+    let descWithLineBreak = desc[0].replaceAll(' (','\n(').replaceAll('), ','),\n')
+    matDescWithLineBreak.push([descWithLineBreak])
+  }
+  //let matDescWithLineBreak = matDesc.map(desc => desc.replaceAll(' (','\n('))
+  console.log(matDescWithLineBreak)
+  appa.getRange(2, 3, appaLastRow - 1).setValues(matDescWithLineBreak)
+  
   // get the range that contains Homogeneous Area,	Material Type,	Material Description,	Friable,	Condition
   // and range that contains Sample ID,	Sample Location
   let hAMtMdFC = appa.getRange(2, 1, 1, 5);
@@ -422,14 +458,14 @@ function formatExport() {
 
 // function that handles coloring postive asbestos samples
 function colorAsbestos(location) {
-  let asbPerc = appa.getRange(2, 9, appaLastRow - 1).getValues();
+  let asbPerc = appa.getRange(2, appaLastCol, appaLastRow - 1).getValues();
   // if the user inputs japan as the project location color red and bold all positive samples
   // else bold and color non trace samples red and trace samples color orange
   if (location === 'JAPAN') {
     for (let i = 0; i < asbPerc.length; i++) {
       if (asbPerc[i][0] != 'ND') {
         let mergedAsb = [];
-        mergedAsb = appa.getRange(i+2, 1, 1, 7).getMergedRanges();
+        mergedAsb = appa.getRange(i+2, 1, 1, appa.getLastColumn() - 2).getMergedRanges();
         appa.getRange(i+2, 1, 1, appaLastCol).setFontColor("red");
         appa.getRange(i+2, 1, 1, appaLastCol).setFontWeight("bold");
         if (mergedAsb.length !== 0) {
@@ -442,18 +478,18 @@ function colorAsbestos(location) {
     } 
   } else {
     for (let i = 0; i < asbPerc.length; i++) {
-      if (asbPerc[i][0].includes("<")) {
+      if (asbPerc[i][0].includes("<") && !asbPerc[i][0].includes) {
         let mergedTrace = [];
-        mergedTrace = appa.getRange(i+2, 1, 1, 9).getMergedRanges();
+        mergedTrace = appa.getRange(i+2, 1, 1, appa.getLastColumn()).getMergedRanges();
         appa.getRange(i+2, 1, 1, appaLastCol).setFontColor("orange")
         if (mergedTrace.length !== 0) {
           for (let j = 0; j < mergedTrace.length; j++) {
             if (mergedTrace[j].getFontWeight() !== "bold") mergedTrace[j].setFontColor("orange")
           }
         }
-      } else if (asbPerc[i][0].includes("%") && !asbPerc[i][0].includes("<")) {
+      } else if (asbPerc[i][0].includes("%")) {
         let mergedAsb = []
-        mergedAsb = appa.getRange(i+2, 1, 1, 7).getMergedRanges();
+        mergedAsb = appa.getRange(i+2, 1, 1, appa.getLastColumn() - 2).getMergedRanges();
         appa.getRange(i+2, 1, 1, appaLastCol).setFontColor("red");
         appa.getRange(i+2, 1, 1, appaLastCol).setFontWeight("bold");
         if (mergedAsb.length !== 0) {
@@ -468,9 +504,6 @@ function colorAsbestos(location) {
 }
 
 function handleAssumed(location) {
-  let copy = ss.getSheetByName("copy");
-  let copyLR = copy.getLastRow();
-
   let sdbHeaders = sampleDB.getRange(1, 1, 1, sdbLastCol).getValues();
   let dbcHoMatNum = dbc.getRange(2, 1, dbcLastRow - 1).getValues();
   let dbcSampID = dbc.getRange(2, 2, dbcLastRow - 1).getValues();
@@ -479,6 +512,7 @@ function handleAssumed(location) {
   let dbcFriable = dbc.getRange(2, 5, dbcLastRow - 1).getValues();
   let dbcCond = dbc.getRange(2, 6, dbcLastRow - 1).getValues();
   let dbcRA = dbc.getRange(2, 7, dbcLastRow - 1).getValues();
+  let dbcFloor = dbc.getRange(2, 8, dbcLastRow - 1).getValues();
 
 
   for (let i = 0; i < sdbHeaders[0].length; i++) {
@@ -492,16 +526,25 @@ function handleAssumed(location) {
   let assumed = []
   for (let i = 0; i < hoMatNum.length; i++) {
     let arr = hoMatNum[i][0].split('-');
-    if (arr[arr.length - 2] === 'AC' || arr[arr.length - 2] === 'AF' || arr[arr.length - 2] === 'AW' || arr[arr.length - 2] === 'AT' || arr[arr.length - 2] === 'AM') {
-      if (location === 'JAPAN') {
-        assumed.push([`${dbcHoMatNum[i]}`, `${dbcMatType[i]}`, `${dbcMatDesc[i]}`, `${dbcFriable[i]}`, `${dbcCond[i]}`, `${dbcSampID[i]}`, `${dbcRA[i]}`, 'N/A', '>0.1% Assumed']);
-      } else assumed.push([`${dbcHoMatNum[i]}`, `${dbcMatType[i]}`, `${dbcMatDesc[i]}`, `${dbcFriable[i]}`, `${dbcCond[i]}`, `${dbcSampID[i]}`, `${dbcRA[i]}`, 'N/A', '>1% Assumed']);
-      sampleDB.getRange(i+2, hA).setValue('ASSUMED')
+    if (appa.getLastColumn() === 9) {
+      if (arr[arr.length - 2] === 'AC' || arr[arr.length - 2] === 'AF' || arr[arr.length - 2] === 'AW' || arr[arr.length - 2] === 'AT' || arr[arr.length - 2] === 'AM') {
+        if (location === 'JAPAN') {
+          assumed.push([`${dbcHoMatNum[i]}`, `${dbcMatType[i]}`, `${dbcMatDesc[i]}`, `${dbcFriable[i]}`, `${dbcCond[i]}`, `${dbcSampID[i]}`, `${dbcRA[i]}`, 'N/A', '>0.1% Assumed']);
+        } else assumed.push([`${dbcHoMatNum[i]}`, `${dbcMatType[i]}`, `${dbcMatDesc[i]}`, `${dbcFriable[i]}`, `${dbcCond[i]}`, `${dbcSampID[i]}`, `${dbcRA[i]}`, 'N/A', '>1% Assumed']);
+        sampleDB.getRange(i+2, hA).setValue('ASSUMED')
+      }
+    } else {
+      if (arr[arr.length - 2] === 'AC' || arr[arr.length - 2] === 'AF' || arr[arr.length - 2] === 'AW' || arr[arr.length - 2] === 'AT' || arr[arr.length - 2] === 'AM') {
+        if (location === 'JAPAN') {
+          assumed.push([`${dbcHoMatNum[i]}`, `${dbcMatType[i]}`, `${dbcMatDesc[i]}`, `${dbcFriable[i]}`, `${dbcCond[i]}`, `${dbcFloor[i]}`, `${dbcSampID[i]}`, `${dbcRA[i]}`, 'N/A', '>0.1% Assumed']);
+        } else assumed.push([`${dbcHoMatNum[i]}`, `${dbcMatType[i]}`, `${dbcMatDesc[i]}`, `${dbcFriable[i]}`, `${dbcCond[i]}`, `${dbcFloor[i]}`, `${dbcSampID[i]}`, `${dbcRA[i]}`, 'N/A', '>1% Assumed']);
+        sampleDB.getRange(i+2, hA).setValue('ASSUMED')
+      }
     }
   }
+  
   if (assumed.length > 0) {
-    appa.getRange(appaLastRow + 1, 1, assumed.length, 9).setValues(assumed);
-    copy.getRange(copyLR + 1, 1, assumed.length, 9).setValues(assumed);
+    appa.getRange(appaLastRow + 1, 1, assumed.length, appa.getLastColumn()).setValues(assumed);
   }
 
   // update the last row and column for app a
@@ -541,7 +584,7 @@ function appafinalFormat() {
   // format resize columns and set aligment
   appa.autoResizeColumns(1, appaLastCol);
   for (let i = 1; i <= appaLastCol; i++) {
-    if (i === 8) {
+    if (i === appa.getLastColumn() - 1) {
       appa.getRange(2, i, appaLastRow).setHorizontalAlignment("left");
       appa.getRange(2, i, appaLastRow).setVerticalAlignment("middle");
     } else {
@@ -556,12 +599,21 @@ function appafinalFormat() {
   appa.insertRowsBefore(1, 5);
 
   // header format as new cells in the sheet
-  let headers = [['Laboratory Asbestos Results', '', '', '', '', '', '', '', ''],
-  [`Building ${bNum}, ${facDesc}`, '', '', '', '', '', '', '', 'Asbestos Survey Report'],
-  [`${loc}`, '', '', '', '', '', '', '', `Survey Date: ${survDate}`],
-  ['', '', '', '', '', '', '', '', ''],
-  ['', '', '', '', '', '', '', '', '']];
-  appa.getRange("A1:I5").setValues(headers);
+  if (appa.getLastColumn() === 9) {
+    var headers = [['Laboratory Asbestos Results', '', '', '', '', '', '', '', ''],
+    [`Building ${bNum}, ${facDesc}`, '', '', '', '', '', '', '', 'Asbestos Survey Report'],
+    [`${loc}`, '', '', '', '', '', '', '', `Survey Date: ${survDate}`],
+    ['', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '']];
+  } else {
+    var headers = [['Laboratory Asbestos Results', '', '', '', '', '', '', '', '', ''],
+    [`Building ${bNum}, ${facDesc}`, '', '', '', '', '', '', '', '', 'Asbestos Survey Report'],
+    [`${loc}`, '', '', '', '', '', '', '', '', `Survey Date: ${survDate}`],
+    ['', '', '', '', '', '', '', '', '', ''],
+    ['', '', '', '', '', '', '', '', '', '']];
+  }
+  
+  appa.getRange(1, 1, headers.length, headers[0].length).setValues(headers);
 
   // header format
   appa.getRange(1, 1, 1, appaLastCol).mergeAcross().setHorizontalAlignment("center").setFontSize(14);
@@ -575,72 +627,6 @@ function appafinalFormat() {
   dataHeader.setFontWeight("bold");
 
   appa.setFrozenRows(6);
-}
-
-function updateCoversheet() {
-  let cover = ss.getSheets()[0];
-  let copy = ss.getSheetByName("copy");
-  let copyLC = copy.getLastColumn();
-  let copyLR = copy.getLastRow();
-
-  sortOrder(copy, copyLR, copyLC);
-  
-  let vals = copy.getRange(2, 9, copyLR - 1).getValues();
-  let f = copy.getRange(2, 4, copyLR - 1).getValues();
-  let c = copy.getRange(2, 5, copyLR - 1).getValues();
-  let l = copy.getRange(2, 8, copyLR - 1).getValues();
-  let mt = copy.getRange(2, 3, copyLR - 1).getValues();
-  let lo = copy.getRange(2, 7, copyLR - 1).getValues();
-  let sids = copy.getRange(2, 6, copyLR - 1).getValues();
-  let has = copy.getRange(2, 1, copyLR - 1).getValues();
-  let asbPerc = [];
-  let pos = [];
-  let posHA = [];
-  let assuA = '';
-
-  for (let i = 0; i < copyLR - 1; i++) {
-    if (vals[i][0] != 'ND') {
-      asbPerc[i] = vals[i][0].split(", ");
-    } else asbPerc[i] = ['']
-  }
-  for (let i = 0; i < asbPerc.length; i++) {
-    for (let j = 0; j < asbPerc[i].length; j++) {
-      if (asbPerc[i][0] != '' && asbPerc[i][0] !== '>1% Assumed' && asbPerc[i][0] !== '>0.1% Assumed') {
-        let lay = l[i][0].substring(1).trim().split('(');
-        pos.push([vals[i][0], lay[0].trim(), has[i][0], f[i][0], c[i][0], lo[i][0]])
-        posHA.push(`${has[i][0]} ${vals[i][0]} ${lo[i][0]} ${lay[0].trim()}`)
-      } else if (asbPerc[i][0] === '>1% Assumed' || asbPerc[i][0] === '>0.1% Assumed') assuA += `${mt[i][0]} (HA ${has[i][0]}, ${f[i][0]}, ${c[i][0]} condition) observed in the ${lo[i][0]}/n/n`;
-    }
-  }
-  let uniqPos = [];
-  let pAsb = [];
-  posHA.forEach((p) => {
-    if (!uniqPos.includes(p)) {
-      uniqPos.push(p);
-      let num = posHA.indexOf(p)
-      pAsb.push(`${pos[num][0]} asbestos was identified in the ${pos[num][1]} (HA ${pos[num][2]}, ${pos[num][3]}, ${pos[num][4]} condition) collected from "${pos[num][5]}".`)
-    }
-  });
-  cover.getRange(37, 2).setValue(pAsb.join('\n\n'))
-  cover.getRange(38, 2).setValue(assuA.trim())
-  
-  let numAss = 0;
-  for (let i = 0; i < has.length; i++) {
-    has[i] = has[i][0];
-  }
-  let totHA = has.filter(onlyUnique);
-  for (let i = 0; i < sids.length; i++) {
-    sids[i] = sids[i][0];
-  }
-  let totSID = sids.filter(onlyUnique);
-  
-  for (let i = 0; i < vals.length; i++) {
-    if (vals[i][0] === '>0.1% Assumed' || vals[i][0] === '>1% Assumed') numAss++;
-  }
-  cover.getRange(21, 3).setValue("total HAs surveyed:");
-  cover.getRange(21, 4).setValue(totHA.length - numAss);
-  cover.getRange(26, 3).setValue("total samples taken:");
-  cover.getRange(26, 4).setValue(totSID.length - numAss);
 }
 
 // creates excel export of app a 
@@ -685,7 +671,7 @@ function addDBVals() {
   // get the headers, getvalues based off the header, and set col numbers 
   let headers = sampleDB.getRange(1, 1, 1, sdbLastCol).getValues()
   for (let i = 0; i < headers[0].length; i++) {
-    if (headers[0][i] === 'Report Date') var repDateCol = i+1;
+    //if (headers[0][i] === 'Report Date') var repDateCol = i+1;
     if (headers[0][i] === 'Matrix / Layers' || headers[0][i] === 'Matrix/Layers') {
       var lay = sampleDB.getRange(2, i+1, sdbLastRow - 1).getValues();
       var layCol = i+1;
@@ -799,7 +785,7 @@ function addDBVals() {
         } else if (whereA[i][0] === 'Hayward') {
           labLoc[j] = ['Hayward'];
           labLocST[j] = ['CA'];
-          labAN[j] = ['101459-1'];
+          labAN[j] = ['101459-0'];
         } else if (whereA[i][0] === 'Las Vegas') {
           labLoc[j] = ['Las Vegas'];
           labLocST[j] = ['NV'];
@@ -938,11 +924,11 @@ function addDBVals() {
   }
  
   // loop through the lab report dates
-  // and reformat it to YYYYMMDD from MM/DD/YY
+  // and reformat it to YYYYMMDD from MM/DD/YYYY
   for (let i = 0; i < labRepDate.length; i++) {
     if (labRepDate[i][0] != 'N/A') {
       let arr = labRepDate[i][0].split("/");
-      labRepDate[i][0] = `20${arr[2]}${arr[0]}${arr[1]}`;
+      labRepDate[i][0] = `${arr[2]}${arr[0]}${arr[1]}`;
     }
   }
   
@@ -955,7 +941,7 @@ function addDBVals() {
   let repDate = [];
   for (let i = 0; i < sdbLastRow - 1; i++) repDate[i] = [`${year}${endOfMonth[month]}`];
 
-  sampleDB.getRange(2, repDateCol, repDate.length).setValues(repDate);
+  //sampleDB.getRange(2, repDateCol, repDate.length).setValues(repDate);
   sampleDB.getRange(2, layCol, lay.length).setValues(lay);
   sampleDB.getRange(2, labAM1Col, labAM1.length).setValues(labAM1);
   sampleDB.getRange(2, labAM2Col, labAM2.length).setValues(labAM2);
